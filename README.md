@@ -63,7 +63,7 @@
 
 1. **克隆專案**
 ```bash
-git clone <repository-url>
+git clone https://github.com/oossccaa/t-erp.git
 cd t-erp
 ```
 
@@ -221,8 +221,7 @@ pnpm --filter @t-erp/client dev     # 客戶端
 
 遇到問題？我們提供多種支援管道：
 
-- 📧 **Email**: support@t-erp.com
-- 💬 **GitHub Issues**: [提交問題](https://github.com/your-org/t-erp/issues)
+- 💬 **GitHub Issues**: [提交問題](https://github.com/oossccaa/t-erp/issues)
 - 📖 **文檔**: [查看文檔](./docs/)
 - 💡 **FAQ**: [常見問題](./docs/FAQ.md)
 
@@ -244,7 +243,7 @@ pnpm --filter @t-erp/client dev     # 客戶端
 
 <div align="center">
 
-**[⭐ 給我們一個 Star](https://github.com/your-org/t-erp)** | **[📖 查看文檔](./docs/)** | **[🐋 Docker 部署](./docs/DOCKER_DEPLOYMENT.md)**
+**[⭐ 給我們一個 Star](https://github.com/oossccaa/t-erp)** | **[📖 查看文檔](./docs/)** | **[🐋 Docker 部署](./docs/DOCKER_DEPLOYMENT.md)**
 
 Made with ❤️ for small businesses
 
