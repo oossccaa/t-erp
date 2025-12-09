@@ -1,0 +1,32 @@
+{
+  "name": "t-erp",
+  "version": "1.0.0",
+  "description": "小工廠進銷存系統 - 基於 NestJS + Vue3 + MySQL 的 monorepo 進銷存管理系統",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write .",
+    "clean": "turbo run clean",
+    "typecheck": "turbo run typecheck"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.5.5",
+    "typescript": "^5.1.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

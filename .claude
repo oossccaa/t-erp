@@ -1,0 +1,269 @@
+# .claude 配置文件 - 小工廠進銷存系統
+# 這個配置文件會讓 Claude Code 更了解您的專案環境和需求
+
+# 專案基本資訊
+project:
+  name: "小工廠進銷存系統"
+  description: "基於 NestJS + Vue3 + MySQL 的 monorepo 進銷存管理系統，支援響應式設計"
+  type: "full-stack-web-app"
+  
+# 技術棧配置
+tech_stack:
+  architecture: "monorepo"
+  package_manager: "pnpm"
+  
+  backend:
+    framework: "nestjs"
+    language: "typescript"
+    database: "postgreSQL"
+    orm: "typeorm"
+    auth: "jwt"
+    
+  frontend:
+    framework: "vue3"
+    language: "typescript"
+    ui_library: "element-plus"  # 或您偏好的 UI 庫
+    state_management: "pinia"
+    routing: "vue-router"
+    
+  shared:
+    linting: "eslint"
+    formatting: "prettier"
+    testing: "jest"
+    bundler: "vite"
+
+# 專案結構
+structure:
+  root: "."
+  workspaces:
+    - "apps/*"
+    - "packages/*"
+    
+  directories:
+    backend: "apps/backend"
+    admin: "apps/admin"
+    client: "apps/client"
+    shared_types: "packages/shared"
+    ui_components: "packages/ui"
+    
+# 開發環境配置
+environment:
+  node_version: "18+"
+  package_manager_version: "pnpm@8+"
+  
+  env_files:
+    - ".env.local"
+    - ".env.development"
+    - ".env.production"
+    
+  required_services:
+    - name: "mysql"
+      port: 3306
+      version: "8.0"
+    - name: "redis"  # 可選，用於緩存
+      port: 6379
+      version: "7.0"
+
+# 代碼規範和最佳實踐
+coding_standards:
+  language_features:
+    - "使用 TypeScript 嚴格模式"
+    - "優先使用 async/await 而不是 Promise.then()"
+    - "使用 ES6+ 語法特性"
+    - "採用函數式編程風格"
+    
+  naming_conventions:
+    files: "kebab-case"  # user-service.ts
+    classes: "PascalCase"  # UserService
+    functions: "camelCase"  # getUserById
+    constants: "UPPER_SNAKE_CASE"  # MAX_RETRY_COUNT
+    
+  import_preferences:
+    - "使用絕對路徑導入 (@/components/...)"
+    - "按類型分組導入 (第三方庫 > 本地模組 > 類型)"
+    - "優先使用具名導入而不是默認導入"
+
+# 業務領域配置
+business_domain:
+  core_entities:
+    - "User (用戶)"
+    - "Product (產品)"
+    - "Category (分類)"
+    - "Supplier (供應商)"
+    - "Customer (客戶)"
+    - "PurchaseOrder (進貨單)"
+    - "SaleOrder (銷貨單)"
+    - "Inventory (庫存)"
+    - "InventoryTransaction (庫存異動)"
+    
+  key_features:
+    - "用戶認證和權限管理"
+    - "產品和分類管理"
+    - "供應商和客戶管理"
+    - "進貨單據管理"
+    - "銷貨單據管理"
+    - "實時庫存追蹤"
+    - "報表統計分析"
+    - "響應式界面設計"
+
+# API 設計原則
+api_design:
+  rest_conventions:
+    - "使用標準 HTTP 動詞 (GET, POST, PUT, DELETE)"
+    - "使用複數名詞作為資源路徑 (/api/products)"
+    - "使用嵌套路徑表示關聯 (/api/orders/1/items)"
+    - "統一錯誤回應格式"
+    
+  response_format:
+    success: |
+      {
+        "success": true,
+        "data": {...},
+        "message": "操作成功"
+      }
+    error: |
+      {
+        "success": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "驗證失敗",
+          "details": [...]
+        }
+      }
+
+# 數據庫設計原則
+database:
+  naming:
+    tables: "snake_case"  # user_profiles
+    columns: "snake_case"  # created_at
+    indexes: "idx_table_column"  # idx_users_email
+    
+  conventions:
+    - "每個表都有 id (主鍵), created_at, updated_at"
+    - "使用軟刪除 (deleted_at) 而不是硬刪除"
+    - "外鍵命名格式：{referenced_table}_id"
+    - "布爾欄位使用 is_ 前綴"
+
+# 前端開發規範
+frontend:
+  component_structure:
+    - "使用 Composition API"
+    - "props 使用 TypeScript 接口定義"
+    - "emit 事件明確定義類型"
+    - "使用 <script setup> 語法"
+    
+  responsive_design:
+    breakpoints:
+      mobile: "768px"
+      tablet: "1024px"
+      desktop: "1200px"
+      
+  performance:
+    - "使用動態導入進行代碼分割"
+    - "圖片使用 lazy loading"
+    - "長列表使用虛擬滾動"
+    - "適當使用 keep-alive 緩存組件"
+
+# 測試策略
+testing:
+  backend:
+    unit: "對所有 service 和 utility 函數編寫單元測試"
+    integration: "對 API 端點編寫整合測試"
+    e2e: "對關鍵業務流程編寫端到端測試"
+    
+  frontend:
+    unit: "對 utility 函數和 composables 編寫單元測試"
+    component: "對重要組件編寫組件測試"
+    e2e: "對用戶關鍵操作流程編寫端到端測試"
+
+# 安全考量
+security:
+  authentication:
+    - "使用 JWT token 進行認證"
+    - "實作 refresh token 機制"
+    - "密碼使用 bcrypt 加密"
+    
+  authorization:
+    - "基於角色的權限控制 (RBAC)"
+    - "API 端點權限驗證"
+    - "前端路由守衛"
+    
+  data_validation:
+    - "後端使用 class-validator 驗證"
+    - "前端使用 schema 驗證"
+    - "SQL 注入防護"
+    - "XSS 攻擊防護"
+
+# 部署和運維
+deployment:
+  containerization:
+    - "使用 Docker 容器化應用"
+    - "multi-stage build 優化鏡像大小"
+    - "使用 docker-compose 本地開發"
+    
+  environment_management:
+    - "區分 development, staging, production 環境"
+    - "敏感資訊使用環境變數"
+    - "配置檔案模板化"
+
+# 開發工作流程
+workflow:
+  git_strategy:
+    - "使用 GitFlow 分支策略"
+    - "commit message 遵循 conventional commits"
+    - "PR/MR 必須經過 code review"
+    
+  ci_cd:
+    - "push 時自動執行測試"
+    - "通過測試後自動部署到 staging"
+    - "production 部署需要手動觸發"
+
+# Claude Code 特殊指示
+claude_instructions:
+  preferences:
+    - "優先考慮代碼可讀性和維護性"
+    - "添加適當的註釋，特別是業務邏輯部分"
+    - "錯誤處理要完整且用戶友好"
+    - "考慮邊緣情況和異常處理"
+    - "生成的代碼要包含基本的類型定義"
+    
+  avoid:
+    - "不要使用已棄用的 API"
+    - "避免過度複雜的抽象"
+    - "不要忽略錯誤處理"
+    - "避免硬編碼配置值"
+    
+  code_style:
+    - "使用一致的縮排 (2 spaces)"
+    - "行長度限制 100 字符"
+    - "函數盡量保持簡潔 (< 50 行)"
+    - "類和接口添加 JSDoc 註釋"
+
+# 常見問題解決方案
+troubleshooting:
+  common_issues:
+    - name: "CORS 錯誤"
+      solution: "檢查 NestJS CORS 配置，確保前端域名在白名單中"
+      
+    - name: "數據庫連接失敗"
+      solution: "檢查 .env 中的數據庫配置，確保 MySQL 服務已啟動"
+      
+    - name: "TypeScript 編譯錯誤"
+      solution: "檢查 tsconfig.json 配置，確保路徑別名設置正確"
+      
+    - name: "Pnpm workspace 依賴問題"
+      solution: "使用 pnpm install --shamefully-hoist 解決依賴提升問題"
+
+# 性能優化建議
+performance:
+  backend:
+    - "數據庫查詢使用索引"
+    - "實作分頁查詢"
+    - "使用 Redis 緩存熱點數據"
+    - "API 回應進行 gzip 壓縮"
+    
+  frontend:
+    - "使用 CDN 加載靜態資源"
+    - "實作 service worker 離線緩存"
+    - "圖片格式優化 (WebP)"
+    - "使用 Tree Shaking 減少包大小"
