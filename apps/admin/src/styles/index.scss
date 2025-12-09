@@ -1,9 +1,9 @@
 // 全局样式
-@import './variables.scss';
-@import './mixins.scss';
-@import './reset.scss';
-@import './common.scss';
-@import './components.scss';
+@use './variables.scss';
+@use './mixins.scss';
+@use './reset.scss';
+@use './common.scss';
+@use './components.scss';
 
 // NProgress 样式覆盖
 #nprogress .bar {

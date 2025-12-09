@@ -44,13 +44,22 @@ export default defineConfig({
     },
   },
   
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler', // 使用現代 Sass API
+        silenceDeprecations: ['legacy-js-api', 'import'], // 暫時靜默棄用警告
+      },
+    },
+  },
+
   build: {
     target: 'esnext',
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
     minify: 'esbuild',
-    
+
     rollupOptions: {
       output: {
         manualChunks: {
