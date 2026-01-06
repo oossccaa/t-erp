@@ -121,6 +121,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/error/NotFoundView.vue'),
     meta: {
       title: '頁面不存在',
+      hidden: true,
     },
   },
 ]
@@ -140,15 +141,34 @@ const router = createRouter({
 // 全局導航守衛
 router.beforeEach(async (to, from, next) => {
   NProgress.start()
-  
+
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
-  
+
   // 設定頁面標題
   if (to.meta.title) {
     document.title = `${to.meta.title} - T-ERP`
   }
-  
+
+  // 檢查是否有 token 但 isAuthenticated 為 false（頁面重新整理的情況）
+  if (requiresAuth && !authStore.isAuthenticated && authStore.token) {
+    // 嘗試從 localStorage 恢復認證狀態
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        authStore.user = user
+        authStore.isAuthenticated = true
+        authStore.permissions = user.permissions || []
+        next()
+        return
+      } catch (error) {
+        console.error('恢復認證狀態失敗:', error)
+        authStore.clearAuth()
+      }
+    }
+  }
+
   if (requiresAuth && !authStore.isAuthenticated) {
     // 需要認證但未登入
     next({ name: 'Login', query: { redirect: to.fullPath } })

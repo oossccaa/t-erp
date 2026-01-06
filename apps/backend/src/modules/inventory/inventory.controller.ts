@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request, ParseIntPipe } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { InventoryService } from './inventory.service'
+import { InventoryTrendDto, TopProductsDto } from './dto/inventory-report.dto'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { RolesGuard } from '../../auth/guards/roles.guard'
 import { Roles } from '../../common/decorators/roles.decorator'
@@ -23,11 +24,23 @@ export class InventoryController {
     @Query('categoryId') categoryId?: number,
     @Query('lowStockOnly') lowStockOnly?: boolean
   ) {
-    return this.inventoryService.getInventoryStats({
+    const result = await this.inventoryService.getInventoryStats({
       warehouse,
       categoryId,
       lowStockOnly
     })
+
+    return {
+      success: true,
+      data: {
+        totalProducts: result.overview.totalProducts,
+        lowStockProducts: result.overview.lowStockProducts,
+        outOfStockProducts: result.overview.outOfStockProducts,
+        totalValue: result.overview.totalInventoryValue,
+        products: result.products
+      },
+      message: '獲取庫存統計成功'
+    }
   }
 
   @Get('transactions/product/:productId')
@@ -108,5 +121,44 @@ export class InventoryController {
     @Request() req
   ) {
     return this.inventoryService.approveAdjustment(id, req.user.id)
+  }
+
+  @Get('report/summary')
+  @ApiOperation({ summary: '獲取庫存彙總報表' })
+  @ApiResponse({ status: 200, description: '獲取成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async getInventorySummary() {
+    const result = await this.inventoryService.getInventorySummary()
+    return {
+      success: true,
+      data: result,
+      message: '獲取庫存彙總報表成功'
+    }
+  }
+
+  @Get('report/trend')
+  @ApiOperation({ summary: '獲取庫存趨勢報表' })
+  @ApiResponse({ status: 200, description: '獲取成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async getInventoryTrend(@Query() dto: InventoryTrendDto) {
+    const result = await this.inventoryService.getInventoryTrend(dto.startDate, dto.endDate)
+    return {
+      success: true,
+      data: result,
+      message: '獲取庫存趨勢報表成功'
+    }
+  }
+
+  @Get('report/top-products')
+  @ApiOperation({ summary: '獲取商品排行榜' })
+  @ApiResponse({ status: 200, description: '獲取成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async getTopProducts(@Query() dto: TopProductsDto) {
+    const result = await this.inventoryService.getTopProducts(dto.limit, dto.sortBy)
+    return {
+      success: true,
+      data: result,
+      message: '獲取商品排行榜成功'
+    }
   }
 }

@@ -108,6 +108,30 @@ export class PurchaseOrder extends BaseEntity {
   @Column({ length: 50, nullable: true })
   referenceNumber: string
 
+  @Column({ length: 500, nullable: true })
+  cancelReason: string
+
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledAt: Date
+
+  @Column('int', { nullable: true })
+  cancelledById: number
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'cancelledById' })
+  cancelledBy: User
+
+  @Column({ type: 'json', nullable: true })
+  statusHistory: Array<{
+    fromStatus: string
+    toStatus: string
+    reason?: string
+    operatedAt: Date
+    operatedById: number
+    operatedByName: string
+    inventoryAction?: 'none' | 'restore' | 'deduct'
+  }>
+
   @OneToMany(() => PurchaseOrderItem, item => item.purchaseOrder, { cascade: true })
   items: PurchaseOrderItem[]
 
@@ -124,7 +148,26 @@ export class PurchaseOrder extends BaseEntity {
 
   // 檢查是否可以取消
   get canCancel(): boolean {
-    return [PurchaseOrderStatus.DRAFT, PurchaseOrderStatus.PENDING].includes(this.status)
+    return ![PurchaseOrderStatus.COMPLETED, PurchaseOrderStatus.CANCELLED].includes(this.status)
+  }
+
+  // 檢查是否可以退回
+  get canRevert(): boolean {
+    return [
+      PurchaseOrderStatus.PENDING,
+      PurchaseOrderStatus.APPROVED,
+      PurchaseOrderStatus.PROCESSING
+    ].includes(this.status)
+  }
+
+  // 獲取退回目標狀態
+  get revertToStatus(): PurchaseOrderStatus | null {
+    const statusMap: Partial<Record<PurchaseOrderStatus, PurchaseOrderStatus>> = {
+      [PurchaseOrderStatus.PENDING]: PurchaseOrderStatus.DRAFT,
+      [PurchaseOrderStatus.APPROVED]: PurchaseOrderStatus.PENDING,
+      [PurchaseOrderStatus.PROCESSING]: PurchaseOrderStatus.APPROVED,
+    }
+    return statusMap[this.status] || null
   }
 
   // 檢查是否可以批准

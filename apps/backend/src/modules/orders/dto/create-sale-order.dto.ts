@@ -97,6 +97,10 @@ export class CreateSaleOrderDto {
 
   @IsOptional()
   @IsString()
+  trackingNumber?: string
+
+  @IsOptional()
+  @IsString()
   referenceNumber?: string
 
   @IsArray()

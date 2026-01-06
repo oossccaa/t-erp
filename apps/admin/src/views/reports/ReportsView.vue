@@ -10,8 +10,8 @@
           <div class="report-icon">
             <el-icon size="40"><TrendCharts /></el-icon>
           </div>
-          <div class="report-title">銷售報表</div>
-          <div class="report-desc">查看銷售數據和趨勢分析</div>
+          <div class="report-title">銀售報表</div>
+          <div class="report-desc">檢視銀售資料和趋勢分析</div>
         </el-card>
       </el-col>
       
@@ -21,7 +21,7 @@
             <el-icon size="40"><ShoppingCart /></el-icon>
           </div>
           <div class="report-title">採購報表</div>
-          <div class="report-desc">查看採購數據和供應商分析</div>
+          <div class="report-desc">檢視採購資料和供應商分析</div>
         </el-card>
       </el-col>
       
@@ -31,7 +31,7 @@
             <el-icon size="40"><Grid /></el-icon>
           </div>
           <div class="report-title">庫存報表</div>
-          <div class="report-desc">查看庫存週轉和庫存分析</div>
+          <div class="report-desc">檢視庫存週轉和庫存分析</div>
         </el-card>
       </el-col>
     </el-row>
@@ -43,7 +43,7 @@
             <el-icon size="40"><Money /></el-icon>
           </div>
           <div class="report-title">財務報表</div>
-          <div class="report-desc">查看收入支出和利潤分析</div>
+          <div class="report-desc">檢視收入支出和利潤分析</div>
         </el-card>
       </el-col>
       
@@ -53,7 +53,7 @@
             <el-icon size="40"><User /></el-icon>
           </div>
           <div class="report-title">客戶報表</div>
-          <div class="report-desc">查看客戶數據和行為分析</div>
+          <div class="report-desc">檢視客戶資料和行為分析</div>
         </el-card>
       </el-col>
       
@@ -63,7 +63,7 @@
             <el-icon size="40"><Box /></el-icon>
           </div>
           <div class="report-title">商品報表</div>
-          <div class="report-desc">查看商品銷售和庫存分析</div>
+          <div class="report-desc">檢視商品銀售和庫存分析</div>
         </el-card>
       </el-col>
     </el-row>
@@ -71,19 +71,22 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { TrendCharts, ShoppingCart, Grid, Money, User, Box } from '@element-plus/icons-vue'
 
+const router = useRouter()
+
 const handleSalesReport = () => {
-  ElMessage.info('銷售報表功能開發中')
+  router.push('/sale-orders')
 }
 
 const handlePurchaseReport = () => {
-  ElMessage.info('採購報表功能開發中')
+  router.push('/purchase-orders')
 }
 
 const handleInventoryReport = () => {
-  ElMessage.info('庫存報表功能開發中')
+  router.push('/inventory')
 }
 
 const handleFinancialReport = () => {

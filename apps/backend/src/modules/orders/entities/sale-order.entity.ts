@@ -135,6 +135,30 @@ export class SaleOrder extends BaseEntity {
   @Column({ length: 50, nullable: true })
   referenceNumber: string
 
+  @Column({ length: 500, nullable: true })
+  cancelReason: string
+
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledAt: Date
+
+  @Column('int', { nullable: true })
+  cancelledById: number
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'cancelledById' })
+  cancelledBy: User
+
+  @Column({ type: 'json', nullable: true })
+  statusHistory: Array<{
+    fromStatus: string
+    toStatus: string
+    reason?: string
+    operatedAt: Date
+    operatedById: number
+    operatedByName: string
+    inventoryAction?: 'none' | 'restore' | 'deduct'
+  }>
+
   @OneToMany(() => SaleOrderItem, item => item.saleOrder, { cascade: true })
   items: SaleOrderItem[]
 
@@ -151,7 +175,31 @@ export class SaleOrder extends BaseEntity {
 
   // 檢查是否可以取消
   get canCancel(): boolean {
-    return [SaleOrderStatus.DRAFT, SaleOrderStatus.PENDING, SaleOrderStatus.CONFIRMED].includes(this.status)
+    // 只有已完成、已取消、已退貨的訂單不能再取消
+    return ![
+      SaleOrderStatus.COMPLETED,
+      SaleOrderStatus.CANCELLED,
+      SaleOrderStatus.RETURNED
+    ].includes(this.status)
+  }
+
+  // 檢查是否可以退回
+  get canRevert(): boolean {
+    return [
+      SaleOrderStatus.PENDING,
+      SaleOrderStatus.CONFIRMED,
+      SaleOrderStatus.PROCESSING
+    ].includes(this.status)
+  }
+
+  // 獲取退回目標狀態
+  get revertToStatus(): SaleOrderStatus | null {
+    const statusMap: Partial<Record<SaleOrderStatus, SaleOrderStatus>> = {
+      [SaleOrderStatus.PENDING]: SaleOrderStatus.DRAFT,
+      [SaleOrderStatus.CONFIRMED]: SaleOrderStatus.PENDING,
+      [SaleOrderStatus.PROCESSING]: SaleOrderStatus.CONFIRMED,
+    }
+    return statusMap[this.status] || null
   }
 
   // 檢查是否可以確認

@@ -334,10 +334,117 @@ export class InventoryService {
     }
   }
 
+  /**
+   * 獲取庫存彙總報表
+   */
+  async getInventorySummary() {
+    // 1. 查詢總商品數和庫存統計
+    const summary = await this.productRepository
+      .createQueryBuilder('product')
+      .select('COUNT(*)', 'totalProducts')
+      .addSelect('COALESCE(SUM(product.stockQuantity), 0)', 'totalStockQuantity')
+      .addSelect('COALESCE(SUM(product.stockQuantity * product.unitCost), 0)', 'totalStockValue')
+      .addSelect('SUM(CASE WHEN product.stockQuantity <= product.minStockLevel AND product.stockQuantity > 0 THEN 1 ELSE 0 END)', 'lowStockCount')
+      .addSelect('SUM(CASE WHEN product.stockQuantity = 0 THEN 1 ELSE 0 END)', 'outOfStockCount')
+      .getRawOne()
+
+    return {
+      totalProducts: parseInt(summary.totalProducts) || 0,
+      totalStockQuantity: parseInt(summary.totalStockQuantity) || 0,
+      totalStockValue: parseFloat(summary.totalStockValue) || 0,
+      lowStockCount: parseInt(summary.lowStockCount) || 0,
+      outOfStockCount: parseInt(summary.outOfStockCount) || 0,
+    }
+  }
+
+  /**
+   * 獲取庫存趨勢報表
+   */
+  async getInventoryTrend(startDateStr: string, endDateStr: string) {
+    const startDate = new Date(startDateStr)
+    const endDate = new Date(endDateStr + 'T23:59:59.999Z')
+
+    if (startDate > endDate) {
+      throw new BadRequestException('開始日期不能晚於結束日期')
+    }
+
+    // 查詢每日入庫和出庫數量
+    const trendData = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('DATE(transaction.transactionDate)', 'date')
+      .addSelect(
+        'SUM(CASE WHEN transaction.quantityChanged > 0 THEN transaction.quantityChanged ELSE 0 END)',
+        'inboundQuantity'
+      )
+      .addSelect(
+        'SUM(CASE WHEN transaction.quantityChanged < 0 THEN ABS(transaction.quantityChanged) ELSE 0 END)',
+        'outboundQuantity'
+      )
+      .addSelect(
+        'SUM(transaction.quantityChanged)',
+        'netChange'
+      )
+      .where('transaction.transactionDate BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate
+      })
+      .groupBy('DATE(transaction.transactionDate)')
+      .orderBy('DATE(transaction.transactionDate)', 'ASC')
+      .getRawMany()
+
+    return {
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString()
+      },
+      trend: trendData.map(item => ({
+        date: item.date,
+        inboundQuantity: parseInt(item.inboundQuantity) || 0,
+        outboundQuantity: parseInt(item.outboundQuantity) || 0,
+        netChange: parseInt(item.netChange) || 0
+      }))
+    }
+  }
+
+  /**
+   * 獲取商品排行榜
+   */
+  async getTopProducts(limit: number = 10, sortBy: 'stockQuantity' | 'stockValue' | 'turnover' = 'stockQuantity') {
+    let orderByField = 'product.stockQuantity'
+
+    if (sortBy === 'stockValue') {
+      orderByField = 'stockValue'
+    }
+
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .select('product.id', 'productId')
+      .addSelect('product.name', 'productName')
+      .addSelect('product.sku', 'productSku')
+      .addSelect('product.stockQuantity', 'stockQuantity')
+      .addSelect('product.unitCost', 'unitCost')
+      .addSelect('product.stockQuantity * product.unitCost', 'stockValue')
+      .orderBy(orderByField, 'DESC')
+      .limit(limit)
+      .getRawMany()
+
+    return {
+      sortBy,
+      products: products.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        productSku: item.productSku,
+        stockQuantity: parseInt(item.stockQuantity) || 0,
+        unitCost: parseFloat(item.unitCost) || 0,
+        stockValue: parseFloat(item.stockValue) || 0
+      }))
+    }
+  }
+
   private async generateAdjustmentNumber(): Promise<string> {
     const today = new Date()
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
-    
+
     const lastAdjustment = await this.adjustmentRepository.findOne({
       where: {
         adjustmentNumber: Like(`ADJ${dateStr}%`)

@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
 import i18n from './i18n'
+import { useAuthStore } from './stores/auth'
 
 // Element Plus 樣式
 import 'element-plus/dist/index.css'
@@ -18,5 +19,23 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+
+// 在應用掛載前，恢復認證狀態
+const authStore = useAuthStore()
+const token = localStorage.getItem('token')
+const userStr = localStorage.getItem('user')
+
+if (token && userStr) {
+  try {
+    const user = JSON.parse(userStr)
+    authStore.user = user
+    authStore.token = token
+    authStore.isAuthenticated = true
+    authStore.permissions = user.permissions || []
+  } catch (error) {
+    console.error('恢復認證狀態失敗:', error)
+    authStore.clearAuth()
+  }
+}
 
 app.mount('#app')

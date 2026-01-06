@@ -21,8 +21,8 @@ export class UpdateSupplierDto {
   phone?: string
 
   @ApiProperty({ description: '電子郵件', example: 'contact@abc.com', required: false })
-  @IsEmail({}, { message: '請輸入有效的電子郵件地址' })
   @IsOptional()
+  @IsEmail({}, { message: '請輸入有效的電子郵件地址' })
   email?: string
 
   @ApiProperty({ description: '地址', example: '台北市信義區信義路100號', required: false })

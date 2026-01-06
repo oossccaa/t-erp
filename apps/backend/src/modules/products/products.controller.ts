@@ -1,14 +1,16 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
   Query,
-  UseGuards, 
-  ParseIntPipe 
+  UseGuards,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
@@ -18,6 +20,7 @@ import { ProductsService } from './products.service'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { QueryProductDto } from './dto/query-product.dto'
+import { BatchDeleteProductDto } from './dto/batch-delete-product.dto'
 import { UserRole } from '../users/entities/user.entity'
 
 @ApiTags('產品管理')
@@ -149,6 +152,19 @@ export class ProductsController {
       success: true,
       data: product,
       message: `庫存${operation === 'add' ? '增加' : '減少'}成功`,
+    }
+  }
+
+  @Delete('batch')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '批次刪除產品' })
+  async batchRemove(@Body() batchDeleteDto: BatchDeleteProductDto) {
+    await this.productsService.batchRemove(batchDeleteDto.ids)
+    return {
+      success: true,
+      message: `成功刪除 ${batchDeleteDto.ids.length} 個產品`,
     }
   }
 

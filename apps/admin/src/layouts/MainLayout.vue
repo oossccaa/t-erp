@@ -325,7 +325,7 @@ onMounted(() => {
 .main-content {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
   overflow: hidden;
 }
 
@@ -338,6 +338,7 @@ onMounted(() => {
   border-bottom: 1px solid var(--el-border-color-light);
   background-color: var(--el-bg-color);
   height: 60px;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -385,13 +386,34 @@ onMounted(() => {
 .tabs-container {
   border-bottom: 1px solid var(--el-border-color-light);
   background-color: var(--el-bg-color);
+  flex-shrink: 0;
 }
 
 // 主體內容
 .main-body {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: var(--el-bg-color-page);
+  padding: 0;
+
+  // 隱藏不必要的滾動條
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--el-border-color-darker);
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--el-border-color-extra-light);
+    }
+  }
 }
 
 // 動畫效果

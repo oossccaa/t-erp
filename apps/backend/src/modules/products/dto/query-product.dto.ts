@@ -20,7 +20,7 @@ export class QueryProductDto {
   @ApiProperty({ description: '搜索關鍵詞 (商品名稱或 SKU)', required: false })
   @IsString({ message: '搜索關鍵詞必須是字符串' })
   @IsOptional()
-  search?: string
+  keyword?: string
 
   @ApiProperty({ description: '分類 ID', required: false })
   @IsNumber({}, { message: '分類 ID 必須是數字' })
@@ -31,13 +31,23 @@ export class QueryProductDto {
 
   @ApiProperty({ description: '是否啟用', required: false })
   @IsBoolean({ message: '啟用狀態必須是布爾值' })
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value
+    if (value === 'true') return true
+    if (value === 'false') return false
+    return undefined
+  })
   @IsOptional()
   isActive?: boolean
 
   @ApiProperty({ description: '是否顯示低庫存商品', required: false })
   @IsBoolean({ message: '低庫存篩選必須是布爾值' })
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value
+    if (value === 'true') return true
+    if (value === 'false') return false
+    return undefined
+  })
   @IsOptional()
   lowStock?: boolean
 

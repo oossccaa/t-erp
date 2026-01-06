@@ -18,7 +18,7 @@ export interface AppState {
   showTabs: boolean
   keepAlive: boolean
 
-  // 網絡狀態
+  // 網路狀態
   isOnline: boolean
   loading: boolean
 }
@@ -57,7 +57,7 @@ export const useAppStore = defineStore('app', {
       // 監聽系統主題變更
       this.watchSystemTheme()
 
-      // 監聽網絡狀態
+      // 監聽網路狀態
       this.watchOnlineStatus()
     },
 

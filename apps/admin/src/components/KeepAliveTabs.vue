@@ -82,10 +82,15 @@ watch(route, (newRoute) => {
 
 <style scoped>
 .keep-alive-tabs {
-  margin-bottom: 20px;
+  padding: 0;
+  margin: 0;
 }
 
 :deep(.el-tabs__content) {
   padding: 0;
+}
+
+:deep(.el-tabs__header) {
+  margin: 0;
 }
 </style>

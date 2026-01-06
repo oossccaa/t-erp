@@ -1,16 +1,16 @@
 <template>
   <div class="dashboard">
-    <!-- 歡迎信息 -->
+    <!-- 歡迎資訊 -->
     <div class="welcome-section">
       <h1 class="welcome-title">
-        欢迎回來，{{ authStore.user?.username }}！
+        歡迎回來，{{ authStore.user?.username }}！
       </h1>
       <p class="welcome-subtitle">
-        今天是 {{ currentDate }}，祝您工作愛快。
+        今天是 {{ currentDate }}，祝您工作愉快。
       </p>
     </div>
     
-    <!-- 數據概覽卡片 -->
+    <!-- 資料概覽卡片 -->
     <el-row :gutter="16" class="stats-cards">
       <el-col :xs="12" :sm="6" v-for="stat in statsData" :key="stat.key">
         <el-card class="stat-card" :class="`stat-card--${stat.type}`" shadow="hover">
@@ -57,16 +57,21 @@
         </el-card>
       </el-col>
       
-      <!-- 產品分類分布 -->
+      <!-- 進貨趨勢圖 -->
       <el-col :xs="24" :lg="12">
         <el-card class="chart-card" shadow="never">
           <template #header>
             <div class="card-header">
-              <span class="card-title">產品分類</span>
+              <span class="card-title">進貨趨勢</span>
+              <el-radio-group v-model="purchasePeriod" size="small">
+                <el-radio-button value="7d">7天</el-radio-button>
+                <el-radio-button value="30d">30天</el-radio-button>
+                <el-radio-button value="90d">90天</el-radio-button>
+              </el-radio-group>
             </div>
           </template>
           <div class="chart-container">
-            <CategoryChart />
+            <PurchaseChart :period="purchasePeriod" />
           </div>
         </el-card>
       </el-col>
@@ -81,12 +86,12 @@
             <div class="card-header">
               <span class="card-title">最新訂單</span>
               <el-link type="primary" :underline="false" @click="$router.push('/sale-orders')">
-                查看全部
+                檢視全部
               </el-link>
             </div>
           </template>
           <div class="list-content">
-            <el-empty v-if="!recentOrders.length" description="暂無數據" :image-size="80" />
+            <el-empty v-if="!recentOrders.length" description="暫無資料" :image-size="80" />
             <div v-else class="order-list">
               <div 
                 v-for="order in recentOrders" 
@@ -118,12 +123,12 @@
             <div class="card-header">
               <span class="card-title">庫存警告</span>
               <el-link type="primary" :underline="false" @click="$router.push('/inventory')">
-                查看全部
+                檢視全部
               </el-link>
             </div>
           </template>
           <div class="list-content">
-            <el-empty v-if="!lowStockProducts.length" description="库存充足" :image-size="80" />
+            <el-empty v-if="!lowStockProducts.length" description="庫存充足" :image-size="80" />
             <div v-else class="stock-list">
               <div 
                 v-for="product in lowStockProducts" 
@@ -150,28 +155,6 @@
         </el-card>
       </el-col>
     </el-row>
-    
-    <!-- 快捷操作 -->
-    <el-card class="quick-actions" shadow="never">
-      <template #header>
-        <span class="card-title">快捷操作</span>
-      </template>
-      <div class="actions-grid">
-        <div 
-          v-for="action in quickActions" 
-          :key="action.key"
-          class="action-item"
-          @click="handleQuickAction(action)"
-        >
-          <div class="action-icon">
-            <el-icon :size="24">
-              <component :is="action.icon" />
-            </el-icon>
-          </div>
-          <div class="action-text">{{ action.label }}</div>
-        </div>
-      </div>
-    </el-card>
   </div>
 </template>
 
@@ -179,6 +162,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
 import {
   Box,
   User,
@@ -186,14 +170,15 @@ import {
   Wallet,
   ArrowUp,
   ArrowDown,
-  Plus,
-  Edit,
-  Search,
-  Document,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import SalesChart from '@/components/charts/SalesChart.vue'
-import CategoryChart from '@/components/charts/CategoryChart.vue'
+import PurchaseChart from '@/components/charts/PurchaseChart.vue'
+import { saleOrdersApi } from '@/api/sale-orders'
+import { purchaseOrdersApi } from '@/api/purchase-orders'
+import { inventoryApi } from '@/api/inventory'
+import { customersApi } from '@/api/customers'
+import { productsApi } from '@/api/products'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -204,124 +189,52 @@ const currentDate = computed(() => {
 })
 
 // 銷售周期
-const salesPeriod = ref('30d')
+const salesPeriod = ref<'7d' | '30d' | '90d'>('30d')
+
+// 進貨周期
+const purchasePeriod = ref<'7d' | '30d' | '90d'>('30d')
 
 // 統計數據
 const statsData = ref([
   {
     key: 'products',
-    label: '產品總数',
-    value: '1,234',
+    label: '產品總數',
+    value: '0',
     icon: 'Box',
     type: 'primary',
-    trend: 5.2,
+    trend: 0,
   },
   {
     key: 'orders',
     label: '本月訂單',
-    value: '89',
+    value: '0',
     icon: 'ShoppingCart',
     type: 'success',
-    trend: 12.5,
+    trend: 0,
   },
   {
     key: 'customers',
-    label: '客戶總数',
-    value: '456',
+    label: '客戶總數',
+    value: '0',
     icon: 'User',
     type: 'info',
-    trend: 3.1,
+    trend: 0,
   },
   {
     key: 'revenue',
-    label: '本月收入',
-    value: '789K',
+    label: '本月銷售額',
+    value: '0',
     icon: 'Wallet',
     type: 'warning',
-    trend: -2.3,
+    trend: 0,
   },
 ])
 
 // 最新訂單
-const recentOrders = ref([
-  {
-    id: 1,
-    orderNumber: 'SO202401001',
-    customer: '優質客戶A',
-    totalAmount: 15600,
-    status: 'pending',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-  },
-  {
-    id: 2,
-    orderNumber: 'SO202401002',
-    customer: '稳定客戶B',
-    totalAmount: 28900,
-    status: 'confirmed',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-  },
-  {
-    id: 3,
-    orderNumber: 'SO202401003',
-    customer: '新客戶C',
-    totalAmount: 8750,
-    status: 'shipped',
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000),
-  },
-])
+const recentOrders = ref<any[]>([])
 
 // 低庫存產品
-const lowStockProducts = ref([
-  {
-    id: 1,
-    name: 'iPhone 15',
-    sku: 'PHONE001',
-    currentStock: 8,
-    minStock: 10,
-  },
-  {
-    id: 2,
-    name: '原子筆',
-    sku: 'PEN001',
-    currentStock: 45,
-    minStock: 100,
-  },
-  {
-    id: 3,
-    name: 'MacBook Air',
-    sku: 'LAPTOP001',
-    currentStock: 3,
-    minStock: 5,
-  },
-])
-
-// 快捷操作
-const quickActions = [
-  {
-    key: 'add-product',
-    label: '新增產品',
-    icon: 'Plus',
-    action: () => router.push('/products/create'),
-  },
-  {
-    key: 'create-order',
-    label: '建立訂單',
-    icon: 'Edit',
-    action: () => router.push('/sale-orders/create'),
-  },
-  {
-    key: 'search-product',
-    label: '搜尋產品',
-    icon: 'Search',
-    action: () => router.push('/products'),
-  },
-  {
-    key: 'view-reports',
-    label: '查看報表',
-    icon: 'Document',
-    action: () => router.push('/reports'),
-  },
-]
+const lowStockProducts = ref<any[]>([])
 
 // 格式化金額
 const formatMoney = (amount: number) => {
@@ -357,16 +270,9 @@ const getOrderStatusText = (status: string) => {
   return statusMap[status] || status
 }
 
-// 查看訂單詳情
+// 檢視訂單詳情
 const viewOrderDetail = (order: any) => {
   router.push(`/sale-orders/${order.id}`)
-}
-
-// 處理快捷操作
-const handleQuickAction = (action: any) => {
-  if (action.action) {
-    action.action()
-  }
 }
 
 // 組件標題
@@ -377,18 +283,93 @@ defineOptions({
 // 初始化數據
 const loadDashboardData = async () => {
   try {
-    // 這裡可以調用 API 獲取實際數據
-    // const [stats, orders, stocks] = await Promise.all([
-    //   dashboardApi.getStats(),
-    //   dashboardApi.getRecentOrders(),
-    //   dashboardApi.getLowStockProducts(),
-    // ])
-    
-    // statsData.value = stats
-    // recentOrders.value = orders
-    // lowStockProducts.value = stocks
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+
+    // 並行加載所有數據
+    const [
+      inventoryStats,
+      monthlySalesReport,
+      customerStats,
+      orders,
+      lowStock
+    ] = await Promise.all([
+      inventoryApi.getStats(),
+      saleOrdersApi.getMonthlySalesReport({ year: currentYear, month: currentMonth }),
+      customersApi.getCustomerStats(),
+      saleOrdersApi.getSaleOrders({ page: 1, limit: 5 }),
+      inventoryApi.getStats({ lowStockOnly: true })
+    ])
+
+    // 更新統計卡片數據 - 產品總數
+    if (inventoryStats.success && inventoryStats.data) {
+      const productStat = statsData.value.find(s => s.key === 'products')
+      if (productStat) {
+        productStat.value = (inventoryStats.data as any).totalProducts?.toString() || '0'
+      }
+    }
+
+    // 更新本月訂單和收入
+    if (monthlySalesReport.success && monthlySalesReport.data) {
+      const orderStat = statsData.value.find(s => s.key === 'orders')
+      const revenueStat = statsData.value.find(s => s.key === 'revenue')
+
+      const reportData = monthlySalesReport.data as any
+      const summary = reportData.data?.summary || reportData.summary
+      if (orderStat && summary?.totalOrders !== undefined) {
+        orderStat.value = summary.totalOrders.toString()
+      }
+
+      if (revenueStat && summary?.totalAmount !== undefined) {
+        const revenue = summary.totalAmount
+        if (revenue >= 1000000) {
+          revenueStat.value = (revenue / 1000000).toFixed(1) + 'M'
+        } else if (revenue >= 1000) {
+          revenueStat.value = (revenue / 1000).toFixed(1) + 'K'
+        } else {
+          revenueStat.value = revenue.toFixed(0)
+        }
+      }
+    }
+
+    // 更新客戶總數
+    if (customerStats.success && customerStats.data) {
+      const customerStat = statsData.value.find(s => s.key === 'customers')
+      if (customerStat) {
+        customerStat.value = (customerStats.data as any).totalCustomers?.toString() || '0'
+      }
+    }
+
+    // 更新最新訂單列表
+    if (orders.success && orders.data) {
+      const orderData = orders.data as any
+      const items = orderData.items || []
+      recentOrders.value = items.slice(0, 5).map((order: any) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customer: order.customerName || '未知客戶',
+        totalAmount: order.totalAmount,
+        status: order.status,
+        createdAt: new Date(order.createdAt)
+      }))
+    }
+
+    // 更新低庫存產品列表
+    if (lowStock.success && lowStock.data) {
+      const stockData = lowStock.data as any
+      const products = stockData.products || []
+      lowStockProducts.value = products.slice(0, 5).map((product: any) => ({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        currentStock: product.stockQuantity,
+        minStock: product.minStockLevel
+      }))
+    }
   } catch (error) {
     console.error('加載儀表板數據失敗:', error)
+    ElMessage.error('加載儀表板數據失敗')
   }
 }
 
@@ -634,41 +615,6 @@ onMounted(() => {
       font-size: 12px;
       color: var(--el-text-color-secondary);
       margin-bottom: 8px;
-    }
-  }
-}
-
-// 快捷操作
-.quick-actions {
-  .actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-  }
-  
-  .action-item {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    background-color: var(--el-fill-color-lighter);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      background-color: var(--el-fill-color);
-      transform: translateY(-2px);
-    }
-    
-    .action-icon {
-      margin-right: 12px;
-      color: var(--el-color-primary);
-    }
-    
-    .action-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--el-text-color-primary);
     }
   }
 }

@@ -4,6 +4,9 @@ import { SaleOrdersService } from './sale-orders.service'
 import { CreateSaleOrderDto } from './dto/create-sale-order.dto'
 import { UpdateSaleOrderDto } from './dto/update-sale-order.dto'
 import { QuerySaleOrderDto } from './dto/query-order.dto'
+import { CancelOrderDto } from './dto/cancel-order.dto'
+import { RevertOrderDto } from './dto/revert-order.dto'
+import { MonthlySalesReportDto, DateRangeSalesReportDto } from './dto/sales-report.dto'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { RolesGuard } from '../../auth/guards/roles.guard'
 import { Roles } from '../../common/decorators/roles.decorator'
@@ -28,7 +31,12 @@ export class SaleOrdersController {
   @ApiOperation({ summary: '獲取銷售單列表' })
   @ApiResponse({ status: 200, description: '獲取成功' })
   async findAll(@Query() query: QuerySaleOrderDto) {
-    return this.saleOrdersService.findAll(query)
+    const result = await this.saleOrdersService.findAll(query)
+    return {
+      success: true,
+      data: result,
+      message: '獲取銷售單列表成功'
+    }
   }
 
   @Get('statistics')
@@ -37,6 +45,32 @@ export class SaleOrdersController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   async getStatistics() {
     return this.saleOrdersService.getStatistics()
+  }
+
+  @Get('report/monthly')
+  @ApiOperation({ summary: '獲取月度銷售報表' })
+  @ApiResponse({ status: 200, description: '獲取成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async getMonthlySalesReport(@Query() dto: MonthlySalesReportDto) {
+    const result = await this.saleOrdersService.getMonthlySalesReport(dto.year, dto.month, dto.status)
+    return {
+      success: true,
+      data: result,
+      message: '獲取月度銷售報表成功'
+    }
+  }
+
+  @Get('report/date-range')
+  @ApiOperation({ summary: '獲取日期範圍銷售報表' })
+  @ApiResponse({ status: 200, description: '獲取成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async getDateRangeSalesReport(@Query() dto: DateRangeSalesReportDto) {
+    const result = await this.saleOrdersService.getDateRangeSalesReport(dto.startDate, dto.endDate, dto.status)
+    return {
+      success: true,
+      data: result,
+      message: '獲取日期範圍銷售報表成功'
+    }
   }
 
   @Get(':id')
@@ -69,8 +103,24 @@ export class SaleOrdersController {
   @ApiOperation({ summary: '取消銷售單' })
   @ApiResponse({ status: 200, description: '取消成功' })
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  async cancel(@Param('id', ParseIntPipe) id: number) {
-    return this.saleOrdersService.cancel(id)
+  async cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() cancelDto: CancelOrderDto,
+    @Request() req
+  ) {
+    return this.saleOrdersService.cancel(id, cancelDto, req.user.id)
+  }
+
+  @Patch(':id/revert')
+  @ApiOperation({ summary: '退回到上一步' })
+  @ApiResponse({ status: 200, description: '退回成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async revert(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() revertDto: RevertOrderDto,
+    @Request() req
+  ) {
+    return this.saleOrdersService.revert(id, revertDto, req.user.id)
   }
 
   @Patch(':id/ship')

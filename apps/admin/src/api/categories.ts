@@ -21,11 +21,11 @@ export interface CategoryQuery {
 // 分類 API
 export const categoriesApi = {
   // 獲取分類列表
-  getCategories: (query?: CategoryQuery) => 
-    request.get<ApiResponse<Category[]>>('/categories', { params: query }),
+  getCategories: (query?: CategoryQuery) =>
+    request.get<ApiResponse<Category[]>>('/categories', query),
 
   // 獲取分類樹
-  getCategoryTree: () => 
+  getCategoryTree: () =>
     request.get<ApiResponse<Category[]>>('/categories/tree'),
 
   // 獲取分類詳情
@@ -37,8 +37,8 @@ export const categoriesApi = {
     request.post<ApiResponse<Category>>('/categories', data),
 
   // 更新分類
-  updateCategory: (id: number, data: UpdateCategoryDto) => 
-    request.put<ApiResponse<Category>>(`/categories/${id}`, data),
+  updateCategory: (id: number, data: UpdateCategoryDto) =>
+    request.patch<ApiResponse<Category>>(`/categories/${id}`, data),
 
   // 刪除分類
   deleteCategory: (id: number) => 

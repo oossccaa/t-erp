@@ -8,9 +8,9 @@ export interface CreateProductDto {
   categoryId?: number
   unitPrice: number
   costPrice: number
-  stock: number
-  minStock: number
-  isActive?: boolean
+  stockQuantity: number
+  minStockLevel: number
+  // 注意：isActive 不在 CreateProductDto 中，後端會自動設為 true
 }
 
 export interface UpdateProductDto extends Partial<CreateProductDto> {}
@@ -40,18 +40,14 @@ export const productsApi = {
     request.post<ApiResponse<Product>>('/products', data),
 
   // 更新產品
-  updateProduct: (id: number, data: UpdateProductDto) => 
-    request.put<ApiResponse<Product>>(`/products/${id}`, data),
+  updateProduct: (id: number, data: UpdateProductDto) =>
+    request.patch<ApiResponse<Product>>(`/products/${id}`, data),
 
   // 刪除產品
   deleteProduct: (id: number) => 
     request.delete<ApiResponse<void>>(`/products/${id}`),
 
   // 批量刪除產品
-  deleteProducts: (ids: number[]) => 
-    request.delete<ApiResponse<void>>('/products', { data: { ids } }),
-
-  // 更新產品狀態
-  updateProductStatus: (id: number, isActive: boolean) => 
-    request.patch<ApiResponse<Product>>(`/products/${id}/status`, { isActive }),
+  deleteProducts: (ids: number[]) =>
+    request.delete<ApiResponse<void>>('/products/batch', { data: { ids } }),
 }

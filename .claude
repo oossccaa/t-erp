@@ -4,7 +4,7 @@
 # 專案基本資訊
 project:
   name: "小工廠進銷存系統"
-  description: "基於 NestJS + Vue3 + MySQL 的 monorepo 進銷存管理系統，支援響應式設計"
+  description: "基於 NestJS + Vue3 + postgreSQL 的 monorepo 進銷存管理系統，支援響應式設計"
   type: "full-stack-web-app"
   
 # 技術棧配置

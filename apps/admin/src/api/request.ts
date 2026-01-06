@@ -64,56 +64,103 @@ class Request {
       },
       async (error) => {
         const { response, message } = error
-        
+
         if (response) {
           const { status, data } = response
-          
+
+          // 統一提取錯誤訊息的函數
+          const getErrorMessage = (defaultMsg: string) => {
+            // 優先順序：error.details > details > error.message > message > defaultMsg
+            const details = data?.error?.details || data?.details
+            if (details) {
+              // 如果 details 是陣列且有內容，返回第一個或合併所有訊息
+              if (Array.isArray(details) && details.length > 0) {
+                return details.join('；')
+              }
+              // 如果 details 是字串
+              if (typeof details === 'string') {
+                return details
+              }
+            }
+            return data?.error?.message || data?.message || defaultMsg
+          }
+
+          // 顯示錯誤訊息（支援陣列格式）
+          const showErrorMessages = (msgs: string | string[]) => {
+            if (Array.isArray(msgs)) {
+              msgs.forEach((msg: string) => {
+                ElMessage.error(msg)
+              })
+            } else {
+              ElMessage.error(msgs)
+            }
+          }
+
           switch (status) {
             case 401:
-              // 未授權，嘗試刷新 token
-              try {
-                const authStore = useAuthStore()
-                await authStore.refreshAccessToken()
-                // 重試原請求
-                return this.instance.request(error.config)
-              } catch {
-                // 刷新失敗，跳轉登入
-                const authStore = useAuthStore()
-                authStore.clearAuth()
-                router.push('/login')
-                ElMessage.error('登入已過期，請重新登入')
+              // 檢查是否為登入請求失敗
+              const isLoginRequest = error.config?.url?.includes('/auth/login')
+
+              if (isLoginRequest) {
+                // 登入失敗，顯示後端返回的錯誤訊息
+                showErrorMessages(getErrorMessage('登入失敗'))
+              } else {
+                // 其他請求的 401，嘗試刷新 token
+                try {
+                  const authStore = useAuthStore()
+                  await authStore.refreshAccessToken()
+                  // 重試原請求
+                  return this.instance.request(error.config)
+                } catch {
+                  // 刷新失敗，跳轉登入
+                  const authStore = useAuthStore()
+                  authStore.clearAuth()
+                  router.push('/login')
+                  ElMessage.error('登入已過期，請重新登入')
+                }
               }
               break
-              
+
             case 403:
-              ElMessage.error('權限不足')
+              showErrorMessages(getErrorMessage('權限不足'))
               break
-              
+
             case 404:
-              ElMessage.error('資源不存在')
+              showErrorMessages(getErrorMessage('資源不存在'))
               break
-              
+
+            case 400:
             case 422:
-              // 表單驗證錯誤
-              if (data.errors) {
+              // 表單驗證錯誤 - 優先顯示 details
+              const details = data?.error?.details || data?.details
+              if (details && Array.isArray(details) && details.length > 0) {
+                // 顯示所有 details 中的錯誤訊息
+                showErrorMessages(details)
+              } else if (data?.error?.message) {
+                // 優先使用 error.message
+                showErrorMessages(data.error.message)
+              } else if (data?.message) {
+                // 如果 message 是陣列（多個驗證錯誤）
+                showErrorMessages(data.message)
+              } else if (data?.errors) {
+                // 舊格式：errors 物件
                 Object.values(data.errors).forEach((messages: any) => {
                   if (Array.isArray(messages)) {
-                    messages.forEach((msg: string) => {
-                      ElMessage.error(msg)
-                    })
+                    showErrorMessages(messages)
                   }
                 })
               } else {
-                ElMessage.error(data.message || '表單驗證失敗')
+                showErrorMessages(getErrorMessage('請求參數錯誤'))
               }
               break
-              
+
             case 500:
-              ElMessage.error('伺服器內部錯誤')
+              showErrorMessages(getErrorMessage('伺服器內部錯誤'))
               break
-              
+
             default:
-              ElMessage.error(data?.message || `請求失敗 (${status})`)
+              showErrorMessages(getErrorMessage(`請求失敗 (${status})`))
+              break
           }
         } else if (message.includes('timeout')) {
           ElMessage.error('請求逾時，請稍後重試')

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Category } from './entities/category.entity'
+import { Product } from '../products/entities/product.entity'
 import { CreateCategoryDto } from './dto/create-category.dto'
 import { UpdateCategoryDto } from './dto/update-category.dto'
 
@@ -9,7 +10,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto'
 export class CategoriesService {
   constructor(
     @InjectRepository(Category)
-    private categoriesRepository: Repository<Category>
+    private categoriesRepository: Repository<Category>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
@@ -119,7 +122,13 @@ export class CategoriesService {
       throw new BadRequestException('請先刪除所有子分類')
     }
 
-    // 這裡應該檢查是否有產品使用此分類，但產品模組還未完成，先跳過
+    // 檢查是否有產品使用此分類
+    const productsCount = await this.productRepository.count({
+      where: { categoryId: id },
+    })
+    if (productsCount > 0) {
+      throw new BadRequestException('此分類下有產品，無法刪除')
+    }
 
     await this.categoriesRepository.softRemove(category)
   }

@@ -1,26 +1,26 @@
 <template>
   <div class="products-view">
-    <!-- 页面标题 -->
+    <!-- 頁面標題 -->
     <div class="page-header">
       <div class="header-content">
-        <h2 class="page-title">产品管理</h2>
-        <p class="page-description">管理您的产品信息，包括库存、价格、分类等</p>
+        <h2 class="page-title">產品管理</h2>
+        <p class="page-description">管理您的產品資料，包括庫存、價格、分類等</p>
       </div>
       <div class="header-actions">
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
-          新增产品
+          新增產品
         </el-button>
       </div>
     </div>
     
-    <!-- 搜索和过滤 -->
+    <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
       <el-form :model="searchForm" :inline="true" class="search-form">
-        <el-form-item label="产品名称">
+        <el-form-item label="產品名稱">
           <el-input
             v-model="searchForm.keyword"
-            placeholder="输入产品名称或 SKU"
+            placeholder="輸入產品名稱或 SKU"
             clearable
             @clear="handleSearch"
             @keyup.enter="handleSearch"
@@ -31,10 +31,10 @@
           </el-input>
         </el-form-item>
         
-        <el-form-item label="产品分类">
+        <el-form-item label="產品分類">
           <el-select
             v-model="searchForm.categoryId"
-            placeholder="选择分类"
+            placeholder="選擇分類"
             clearable
             style="width: 180px"
           >
@@ -47,14 +47,14 @@
           </el-select>
         </el-form-item>
         
-        <el-form-item label="状态">
+        <el-form-item label="狀態">
           <el-select
             v-model="searchForm.isActive"
-            placeholder="选择状态"
+            placeholder="選擇狀態"
             clearable
             style="width: 120px"
           >
-            <el-option label="正常" :value="true" />
+            <el-option label="啟用" :value="true" />
             <el-option label="停用" :value="false" />
           </el-select>
         </el-form-item>
@@ -62,48 +62,48 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            搜尋
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            重設
           </el-button>
         </el-form-item>
       </el-form>
     </el-card>
     
-    <!-- 产品列表 -->
+    <!-- 產品列表 -->
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="card-header">
           <div class="header-left">
-            <span class="card-title">产品列表</span>
+            <span class="card-title">產品列表</span>
             <el-tag v-if="selectedRows.length" type="primary">
-              已选择 {{ selectedRows.length }} 项
+              已選擇 {{ selectedRows.length }} 項
             </el-tag>
           </div>
           <div class="header-right">
             <el-button-group v-if="selectedRows.length">
               <el-button size="small" @click="handleBatchEnable">
                 <el-icon><Check /></el-icon>
-                批量启用
+                批次啟用
               </el-button>
               <el-button size="small" @click="handleBatchDisable">
                 <el-icon><Close /></el-icon>
-                批量停用
+                批次停用
               </el-button>
               <el-button size="small" type="danger" @click="handleBatchDelete">
                 <el-icon><Delete /></el-icon>
-                批量删除
+                批次刪除
               </el-button>
             </el-button-group>
             <el-button size="small" @click="handleExport">
               <el-icon><Download /></el-icon>
-              导出
+              匯出
             </el-button>
             <el-button size="small" @click="handleImport">
               <el-icon><Upload /></el-icon>
-              导入
+              匯入
             </el-button>
           </div>
         </div>
@@ -119,23 +119,29 @@
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="sku" label="SKU" width="120" sortable="custom" />
-        <el-table-column prop="name" label="产品名称" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="category" label="分类" width="120">
+        <el-table-column prop="name" label="產品名稱" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="product-name-link" @click="handleView(row)">
+              {{ row.name }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="category" label="分類" width="120">
           <template #default="{ row }">
             <el-tag size="small" type="info">{{ row.category?.name }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="unitPrice" label="单价" width="100" sortable="custom">
+        <el-table-column prop="unitPrice" label="單價" width="100" sortable="custom">
           <template #default="{ row }">
             <span class="price">{{ formatMoney(row.unitPrice) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="costPrice" label="成本" width="100" sortable="custom">
+        <el-table-column prop="costPrice" label="成本價" width="100" sortable="custom">
           <template #default="{ row }">
             <span class="price">{{ formatMoney(row.costPrice) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="stockQuantity" label="库存" width="80" sortable="custom">
+        <el-table-column prop="stockQuantity" label="庫存" width="80" sortable="custom">
           <template #default="{ row }">
             <span 
               :class="{
@@ -147,8 +153,8 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="minStockLevel" label="最低库存" width="90" />
-        <el-table-column prop="isActive" label="状态" width="80">
+        <el-table-column prop="minStockLevel" label="最低庫存" width="90" />
+        <el-table-column prop="isActive" label="狀態" width="80">
           <template #default="{ row }">
             <el-switch
               v-model="row.isActive"
@@ -156,17 +162,14 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160" sortable="custom">
+        <el-table-column prop="createdAt" label="建立時間" width="160" sortable="custom">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button-group>
-              <el-button size="small" type="primary" @click="handleView(row)">
-                <el-icon><View /></el-icon>
-              </el-button>
               <el-button size="small" @click="handleEdit(row)">
                 <el-icon><Edit /></el-icon>
               </el-button>
@@ -181,7 +184,7 @@
         </el-table-column>
       </el-table>
       
-      <!-- 分页 -->
+      <!-- 分頁 -->
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
@@ -195,7 +198,7 @@
       </div>
     </el-card>
     
-    <!-- 产品详情对话框 -->
+    <!-- 產品詳情對話框 -->
     <ProductDialog
       v-model="dialogVisible"
       :mode="dialogMode"
@@ -227,7 +230,7 @@ import { categoriesApi } from '@/api/categories'
 import ProductDialog from '@/components/products/ProductDialog.vue'
 import { formatMoney, formatDateTime } from '@/utils/format'
 
-// 可响式数据
+// 響應式資料
 const loading = ref(false)
 const selectedRows = ref<Product[]>([])
 const tableData = ref<Product[]>([])
@@ -236,27 +239,27 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit' | 'view'>('create')
 const currentProduct = ref<Product | null>(null)
 
-// 搜索表单
+// 搜尋表單
 const searchForm = reactive({
   keyword: '',
   categoryId: null as number | null,
   isActive: null as boolean | null,
 })
 
-// 分页信息
+// 分頁資訊
 const pagination = reactive({
   page: 1,
   limit: 20,
   total: 0,
 })
 
-// 排序信息
+// 排序資訊
 const sortInfo = reactive({
   prop: 'createdAt',
   order: 'descending',
 })
 
-// 计算属性
+// 計算屬性
 const queryParams = computed(() => ({
   page: pagination.page,
   limit: pagination.limit,
@@ -267,7 +270,7 @@ const queryParams = computed(() => ({
   sortOrder: (sortInfo.order === 'descending' ? 'DESC' : 'ASC') as 'ASC' | 'DESC',
 }))
 
-// 获取产品列表
+// 取得產品列表
 const getProductsList = async () => {
   loading.value = true
   try {
@@ -275,29 +278,29 @@ const getProductsList = async () => {
     tableData.value = response.data?.items || []
     pagination.total = response.data?.total || 0
   } catch (error) {
-    ElMessage.error('获取产品列表失败')
+    ElMessage.error('取得產品列表失敗')
   } finally {
     loading.value = false
   }
 }
 
-// 获取分类列表
+// 取得分類列表
 const getCategoriesList = async () => {
   try {
     const response = await categoriesApi.getCategories()
     categories.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
-    console.error('获取分类列表失败:', error)
+    console.error('取得分類列表失敗:', error)
   }
 }
 
-// 搜索处理
+// 搜尋處理
 const handleSearch = () => {
   pagination.page = 1
   getProductsList()
 }
 
-// 重置处理
+// 重設處理
 const handleReset = () => {
   Object.assign(searchForm, {
     keyword: '',
@@ -308,7 +311,7 @@ const handleReset = () => {
   getProductsList()
 }
 
-// 分页处理
+// 分頁處理
 const handleSizeChange = (limit: number) => {
   pagination.limit = limit
   pagination.page = 1
@@ -320,7 +323,7 @@ const handleCurrentChange = (page: number) => {
   getProductsList()
 }
 
-// 排序处理
+// 排序處理
 const handleSortChange = ({ prop, order }: any) => {
   if (order) {
     sortInfo.prop = prop
@@ -332,109 +335,109 @@ const handleSortChange = ({ prop, order }: any) => {
   getProductsList()
 }
 
-// 选择处理
+// 選擇處理
 const handleSelectionChange = (selection: Product[]) => {
   selectedRows.value = selection
 }
 
-// 新增产品
+// 新增產品
 const handleCreate = () => {
   currentProduct.value = null
   dialogMode.value = 'create'
   dialogVisible.value = true
 }
 
-// 查看产品
+// 檢視產品
 const handleView = (row: Product) => {
   currentProduct.value = row
   dialogMode.value = 'view'
   dialogVisible.value = true
 }
 
-// 编辑产品
+// 編輯產品
 const handleEdit = (row: Product) => {
   currentProduct.value = row
   dialogMode.value = 'edit'
   dialogVisible.value = true
 }
 
-// 复制产品
+// 複製產品
 const handleCopy = (row: Product) => {
-  currentProduct.value = { ...row, id: 0, sku: '', name: `${row.name} - 复制` }
+  currentProduct.value = { ...row, id: 0, sku: '', name: `${row.name} - 複本` }
   dialogMode.value = 'create'
   dialogVisible.value = true
 }
 
-// 删除产品
+// 刪除產品
 const handleDelete = async (row: Product) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除产品 "${row.name}" 吗？`,
-      '删除确认',
+      `確定要刪除產品 "${row.name}" 嗎？`,
+      '刪除確認',
       {
-        confirmButtonText: '确定',
+        confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning',
       }
     )
     
     await productsApi.deleteProduct(row.id!)
-    ElMessage.success('删除成功')
+    ElMessage.success('刪除成功')
     getProductsList()
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error('刪除失敗')
     }
   }
 }
 
-// 切换状态
+// 切換狀態
 const handleToggleStatus = async (row: Product) => {
   try {
-    await productsApi.updateProductStatus(row.id!, row.isActive)
-    ElMessage.success(row.isActive ? '启用成功' : '停用成功')
-    getProductsList()
+    // 使用 updateProduct API 更新 isActive 狀態
+    await productsApi.updateProduct(row.id!, { isActive: row.isActive })
+    ElMessage.success(row.isActive ? '啟用成功' : '停用成功')
   } catch (error) {
-    ElMessage.error('操作失败')
-    // 还原状态
+    // 還原狀態
     row.isActive = !row.isActive
+    // 錯誤訊息已由 request.ts 攔截器處理
   }
 }
 
-// 批量启用
+// 批次啟用
 const handleBatchEnable = async () => {
   const ids = selectedRows.value.map(row => row.id!)
   try {
-    // 使用單個 API 批量處理
-    await Promise.all(ids.map(id => productsApi.updateProductStatus(id, true)))
-    ElMessage.success('批量启用成功')
+    // 使用 updateProduct API 批次處理
+    await Promise.all(ids.map(id => productsApi.updateProduct(id, { isActive: true })))
+    ElMessage.success('批次啟用成功')
     getProductsList()
   } catch (error) {
-    ElMessage.error('批量启用失败')
+    // 錯誤訊息已由 request.ts 攔截器處理
   }
 }
 
-// 批量停用
+// 批次停用
 const handleBatchDisable = async () => {
   const ids = selectedRows.value.map(row => row.id!)
   try {
-    // 使用單個 API 批量處理
-    await Promise.all(ids.map(id => productsApi.updateProductStatus(id, false)))
-    ElMessage.success('批量停用成功')
+    // 使用 updateProduct API 批次處理
+    await Promise.all(ids.map(id => productsApi.updateProduct(id, { isActive: false })))
+    ElMessage.success('批次停用成功')
     getProductsList()
   } catch (error) {
-    ElMessage.error('批量停用失败')
+    // 錯誤訊息已由 request.ts 攔截器處理
   }
 }
 
-// 批量删除
+// 批次刪除
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 个产品吗？`,
-      '批量删除确认',
+      `確定要刪除選取的 ${selectedRows.value.length} 個產品嗎？`,
+      '批次刪除確認',
       {
-        confirmButtonText: '确定',
+        confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning',
       }
@@ -442,33 +445,50 @@ const handleBatchDelete = async () => {
     
     const ids = selectedRows.value.map(row => row.id!)
     await productsApi.deleteProducts(ids)
-    ElMessage.success('批量删除成功')
+    ElMessage.success('批次刪除成功')
     getProductsList()
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('批量删除失败')
+      ElMessage.error('批次刪除失敗')
     }
   }
 }
 
-// 导出数据
+// 匯出資料
 const handleExport = async () => {
-  ElMessage.info('導出功能開發中')
+  ElMessage.info('匯出功能開發中')
 }
 
-// 导入数据
+// 匯入資料
 const handleImport = () => {
-  // 这里可以打开导入对话框
-  ElMessage.info('导入功能开发中...')
+  // 這裡可以開啟匯入對話框
+  ElMessage.info('匯入功能開發中...')
 }
 
-// 对话框确认
-const handleDialogConfirm = () => {
-  dialogVisible.value = false
-  getProductsList()
+// 對話框確認
+const handleDialogConfirm = async (formData: any) => {
+  try {
+    if (dialogMode.value === 'create') {
+      // 建立產品 - 移除 isActive 欄位（後端不接受）
+      const { isActive, ...createData } = formData
+      await productsApi.createProduct(createData)
+      ElMessage.success('建立成功')
+    } else if (dialogMode.value === 'edit') {
+      // 更新產品 - 移除不允許更新的欄位（sku, stockQuantity）
+      const { sku, stockQuantity, ...updateData } = formData
+      await productsApi.updateProduct(currentProduct.value!.id!, updateData)
+      ElMessage.success('更新成功')
+    }
+
+    dialogVisible.value = false
+    getProductsList()
+  } catch (error: any) {
+    ElMessage.error(error.message || (dialogMode.value === 'create' ? '建立失敗' : '更新失敗'))
+    throw error // 讓 dialog 知道失敗，不要關閉
+  }
 }
 
-// 组件名称
+// 元件名稱
 defineOptions({
   name: 'Products',
 })
@@ -556,6 +576,15 @@ onMounted(async () => {
 .stock-danger {
   color: var(--el-color-danger);
   font-weight: 600;
+}
+
+.product-name-link {
+  color: var(--el-color-primary);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .pagination-wrapper {

@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', {
         this.isAuthenticated = true
         this.permissions = (user as User).permissions || []
 
-        // 储存到 localStorage
+        // 儲存至 localStorage
         localStorage.setItem('token', access_token)
         if (this.refreshToken) {
           localStorage.setItem('refreshToken', this.refreshToken)
@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', {
         ElMessage.success('登入成功')
         return response
       } catch (error: any) {
-        ElMessage.error(error.message || '登入失敗')
+        // 錯誤訊息已由 request.ts 攔截器處理，此處僅需拋出錯誤
         throw error
       }
     },

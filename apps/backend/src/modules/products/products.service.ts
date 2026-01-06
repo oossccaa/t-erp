@@ -43,15 +43,15 @@ export class ProductsService {
     limit: number,
     totalPages: number 
   }> {
-    const { 
-      page = 1, 
-      limit = 10, 
-      search, 
-      categoryId, 
-      isActive, 
-      lowStock, 
-      sortBy = 'createdAt', 
-      sortOrder = 'DESC' 
+    const {
+      page = 1,
+      limit = 10,
+      keyword,
+      categoryId,
+      isActive,
+      lowStock,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC'
     } = queryDto
 
     const queryBuilder = this.productsRepository
@@ -59,10 +59,10 @@ export class ProductsService {
       .leftJoinAndSelect('product.category', 'category')
 
     // 搜索條件
-    if (search) {
+    if (keyword) {
       queryBuilder.andWhere(
-        '(product.name LIKE :search OR product.sku LIKE :search)',
-        { search: `%${search}%` }
+        '(product.name LIKE :keyword OR product.sku LIKE :keyword)',
+        { keyword: `%${keyword}%` }
       )
     }
 
@@ -166,6 +166,18 @@ export class ProductsService {
   async remove(id: number): Promise<void> {
     const product = await this.findById(id)
     await this.productsRepository.softRemove(product)
+  }
+
+  async batchRemove(ids: number[]): Promise<void> {
+    // 批次獲取產品
+    const products = await this.productsRepository.findByIds(ids)
+
+    if (products.length === 0) {
+      throw new NotFoundException('找不到要刪除的產品')
+    }
+
+    // 批次軟刪除
+    await this.productsRepository.softRemove(products)
   }
 
   async getProductStats(): Promise<{

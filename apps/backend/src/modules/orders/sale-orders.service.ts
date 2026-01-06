@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, Like } from 'typeorm'
+import { Repository, Like, DataSource } from 'typeorm'
 import { SaleOrder, SaleOrderStatus, PaymentStatus, ShippingStatus } from './entities/sale-order.entity'
 import { SaleOrderItem } from './entities/sale-order-item.entity'
 import { CreateSaleOrderDto } from './dto/create-sale-order.dto'
 import { UpdateSaleOrderDto } from './dto/update-sale-order.dto'
 import { QuerySaleOrderDto } from './dto/query-order.dto'
+import { CancelOrderDto } from './dto/cancel-order.dto'
+import { RevertOrderDto } from './dto/revert-order.dto'
 import { Product } from '../products/entities/product.entity'
+import { User } from '../users/entities/user.entity'
 import { InventoryService } from '../inventory/inventory.service'
 import { InventoryTransactionType } from '../inventory/entities/inventory-transaction.entity'
 
@@ -19,7 +22,10 @@ export class SaleOrdersService {
     private saleOrderItemRepository: Repository<SaleOrderItem>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private inventoryService: InventoryService,
+    private dataSource: DataSource,
   ) {}
 
   async create(createDto: CreateSaleOrderDto, userId: number): Promise<SaleOrder> {
@@ -141,16 +147,15 @@ export class SaleOrdersService {
       .skip((query.page - 1) * query.limit)
       .take(query.limit)
 
-    const orders = await queryBuilder.getMany()
+    const items = await queryBuilder.getMany()
+    const totalPages = Math.ceil(total / query.limit)
 
     return {
-      data: orders,
-      pagination: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        pages: Math.ceil(total / query.limit)
-      }
+      items,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages
     }
   }
 
@@ -242,18 +247,117 @@ export class SaleOrdersService {
     return this.findOne(id)
   }
 
-  async cancel(id: number): Promise<SaleOrder> {
+  async cancel(id: number, cancelDto: CancelOrderDto, userId: number): Promise<SaleOrder> {
     const order = await this.findOne(id)
 
     if (!order.canCancel) {
       throw new BadRequestException('當前狀態不允許取消')
     }
 
-    await this.saleOrderRepository.update(id, {
-      status: SaleOrderStatus.CANCELLED
-    })
+    return this.dataSource.transaction(async (manager) => {
+      // 記錄狀態變更歷史
+      const statusHistory = order.statusHistory || []
+      const user = await this.userRepository.findOne({ where: { id: userId } })
 
-    return this.findOne(id)
+      statusHistory.push({
+        fromStatus: order.status,
+        toStatus: SaleOrderStatus.CANCELLED,
+        reason: cancelDto.reason,
+        operatedAt: new Date(),
+        operatedById: userId,
+        operatedByName: user?.username || 'Unknown',
+        inventoryAction: cancelDto.adjustInventory ? 'restore' : 'none'
+      })
+
+      // 如果選擇調整庫存且已有出貨記錄
+      if (cancelDto.adjustInventory) {
+        for (const item of order.items) {
+          if (item.shippedQuantity > 0) {
+            // 記錄庫存異動並增加產品庫存（回補）
+            await this.inventoryService.recordTransaction({
+              productId: item.productId,
+              type: InventoryTransactionType.RETURN_RECEIVE,
+              quantityChanged: item.shippedQuantity,
+              unitCost: item.product.unitCost,
+              referenceType: 'sale_order',
+              referenceId: order.id,
+              referenceNumber: order.orderNumber,
+              reason: `取消銷售單 ${order.orderNumber}，回補庫存。原因：${cancelDto.reason}`,
+              createdById: userId,
+            })
+          }
+        }
+      }
+
+      // 更新訂單
+      await manager.update(SaleOrder, id, {
+        status: SaleOrderStatus.CANCELLED,
+        cancelReason: cancelDto.reason,
+        cancelledAt: new Date(),
+        cancelledById: userId,
+        statusHistory,
+      })
+
+      return this.findOne(id)
+    })
+  }
+
+  async revert(id: number, revertDto: RevertOrderDto, userId: number): Promise<SaleOrder> {
+    const order = await this.findOne(id)
+
+    if (!order.canRevert) {
+      throw new BadRequestException('當前狀態不允許退回')
+    }
+
+    const targetStatus = order.revertToStatus
+    if (!targetStatus) {
+      throw new BadRequestException('無法確定退回狀態')
+    }
+
+    // 檢查是否有出貨記錄
+    if ([
+      SaleOrderStatus.PROCESSING,
+      SaleOrderStatus.PARTIALLY_SHIPPED,
+      SaleOrderStatus.SHIPPED,
+      SaleOrderStatus.DELIVERED
+    ].includes(order.status)) {
+      const hasShippedItems = order.items.some(item => item.shippedQuantity > 0)
+      if (hasShippedItems) {
+        throw new BadRequestException(
+          '該訂單已有出貨記錄，不能直接退回。請使用「取消」功能並選擇回補庫存。'
+        )
+      }
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      // 記錄狀態變更
+      const statusHistory = order.statusHistory || []
+      const user = await this.userRepository.findOne({ where: { id: userId } })
+
+      statusHistory.push({
+        fromStatus: order.status,
+        toStatus: targetStatus,
+        reason: revertDto.reason || '退回上一步',
+        operatedAt: new Date(),
+        operatedById: userId,
+        operatedByName: user?.username || 'Unknown',
+        inventoryAction: 'none'
+      })
+
+      // 清除確認相關欄位（如果從 CONFIRMED 退回）
+      const updateData: any = {
+        status: targetStatus,
+        statusHistory,
+      }
+
+      if (order.status === SaleOrderStatus.CONFIRMED && targetStatus === SaleOrderStatus.PENDING) {
+        updateData.approvedById = null
+        updateData.approvedAt = null
+      }
+
+      await manager.update(SaleOrder, id, updateData)
+      return this.findOne(id)
+    })
   }
 
   async shipItems(id: number, items: Array<{ itemId: number; shippedQuantity: number }>) {
@@ -378,6 +482,148 @@ export class SaleOrdersService {
       }
       return acc
     }, {})
+  }
+
+  /**
+   * 獲取月度銷售報表
+   */
+  async getMonthlySalesReport(year: number, month: number, status?: SaleOrderStatus) {
+    // 計算月份的起始和結束日期
+    const startDate = new Date(year, month - 1, 1)
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999)
+
+    return this.getSalesReportByDateRange(
+      startDate,
+      endDate,
+      `${year}年${month}月`,
+      status
+    )
+  }
+
+  /**
+   * 獲取日期範圍銷售報表
+   */
+  async getDateRangeSalesReport(
+    startDateStr: string,
+    endDateStr: string,
+    status?: SaleOrderStatus
+  ) {
+    const startDate = new Date(startDateStr)
+    const endDate = new Date(endDateStr + 'T23:59:59.999Z')
+
+    // 驗證日期範圍
+    if (startDate > endDate) {
+      throw new BadRequestException('開始日期不能晚於結束日期')
+    }
+
+    const label = `${startDateStr} 至 ${endDateStr}`
+    return this.getSalesReportByDateRange(startDate, endDate, label, status)
+  }
+
+  /**
+   * 核心報表查詢方法（被月度和日期範圍方法共用）
+   */
+  private async getSalesReportByDateRange(
+    startDate: Date,
+    endDate: Date,
+    label: string,
+    status?: SaleOrderStatus
+  ) {
+    // 構建基礎查詢條件
+    const baseWhere = 'order.orderDate BETWEEN :startDate AND :endDate'
+    const baseParams: any = { startDate, endDate }
+
+    if (status) {
+      baseParams.status = status
+    }
+
+    // 1. 查詢彙總數據
+    const summaryQueryBuilder = this.saleOrderRepository
+      .createQueryBuilder('order')
+      .where(baseWhere, baseParams)
+
+    if (status) {
+      summaryQueryBuilder.andWhere('order.status = :status', { status })
+    }
+
+    const summaryQuery = await summaryQueryBuilder
+      .select('COUNT(*)', 'totalOrders')
+      .addSelect('COALESCE(SUM(order.totalAmount), 0)', 'totalAmount')
+      .addSelect('COALESCE(AVG(order.totalAmount), 0)', 'avgOrderValue')
+      .addSelect(
+        'SUM(CASE WHEN order.status = :completedStatus THEN 1 ELSE 0 END)',
+        'completedOrders'
+      )
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN order.status = :completedStatus THEN order.totalAmount ELSE 0 END), 0)',
+        'completedAmount'
+      )
+      .setParameter('completedStatus', SaleOrderStatus.COMPLETED)
+      .getRawOne()
+
+    // 2. 查詢每日趨勢數據
+    const trendQueryBuilder = this.saleOrderRepository
+      .createQueryBuilder('order')
+      .select('DATE(order.orderDate)', 'date')
+      .addSelect('COALESCE(SUM(order.totalAmount), 0)', 'amount')
+      .addSelect('COUNT(*)', 'orderCount')
+      .addSelect('COALESCE(AVG(order.totalAmount), 0)', 'avgAmount')
+      .where(baseWhere, baseParams)
+      .groupBy('DATE(order.orderDate)')
+      .orderBy('DATE(order.orderDate)', 'ASC')
+
+    if (status) {
+      trendQueryBuilder.andWhere('order.status = :status', { status })
+    }
+
+    const trendData = await trendQueryBuilder.getRawMany()
+
+    // 3. 查詢狀態分布
+    const statusQueryBuilder = this.saleOrderRepository
+      .createQueryBuilder('order')
+      .select('order.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect('COALESCE(SUM(order.totalAmount), 0)', 'amount')
+      .where(baseWhere, baseParams)
+      .groupBy('order.status')
+
+    if (status) {
+      statusQueryBuilder.andWhere('order.status = :status', { status })
+    }
+
+    const statusBreakdown = await statusQueryBuilder.getRawMany()
+
+    // 計算百分比
+    const totalAmount = parseFloat(summaryQuery.totalAmount) || 0
+    const statusBreakdownWithPercentage = statusBreakdown.map(item => ({
+      status: item.status,
+      count: parseInt(item.count) || 0,
+      amount: parseFloat(item.amount) || 0,
+      percentage: totalAmount > 0 ? (parseFloat(item.amount) / totalAmount) * 100 : 0
+    }))
+
+    // 格式化返回數據
+    return {
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        label
+      },
+      summary: {
+        totalAmount: parseFloat(summaryQuery.totalAmount) || 0,
+        totalOrders: parseInt(summaryQuery.totalOrders) || 0,
+        avgOrderValue: parseFloat(summaryQuery.avgOrderValue) || 0,
+        completedOrders: parseInt(summaryQuery.completedOrders) || 0,
+        completedAmount: parseFloat(summaryQuery.completedAmount) || 0
+      },
+      trend: trendData.map(item => ({
+        date: item.date,
+        amount: parseFloat(item.amount) || 0,
+        orderCount: parseInt(item.orderCount) || 0,
+        avgAmount: parseFloat(item.avgAmount) || 0
+      })),
+      statusBreakdown: statusBreakdownWithPercentage
+    }
   }
 
   private async generateOrderNumber(): Promise<string> {

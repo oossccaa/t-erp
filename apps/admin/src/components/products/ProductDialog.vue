@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? '編輯產品' : '新增產品'"
+    :title="isView ? '檢視產品' : isEdit ? '編輯產品' : '新增產品'"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -11,11 +11,19 @@
       :model="form"
       :rules="rules"
       label-width="100px"
+      :disabled="isView"
     >
       <el-form-item label="SKU" prop="sku">
-        <el-input v-model="form.sku" placeholder="請輸入產品 SKU" />
+        <el-input
+          v-model="form.sku"
+          placeholder="請輸入產品 SKU"
+          :disabled="isEdit"
+        />
+        <template v-if="isEdit" #extra>
+          <span style="color: #909399; font-size: 12px;">SKU 不可修改</span>
+        </template>
       </el-form-item>
-      
+
       <el-form-item label="產品名稱" prop="name">
         <el-input v-model="form.name" placeholder="請輸入產品名稱" />
       </el-form-item>
@@ -27,6 +35,22 @@
           :rows="3"
           placeholder="請輸入產品描述"
         />
+      </el-form-item>
+
+      <el-form-item label="產品分類">
+        <el-select
+          v-model="form.categoryId"
+          placeholder="請選擇產品分類"
+          clearable
+          style="width: 100%"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
       </el-form-item>
       
       <el-row :gutter="16">
@@ -54,18 +78,22 @@
       
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="庫存" prop="stock">
+          <el-form-item label="庫存" prop="stockQuantity">
             <el-input-number
-              v-model="form.stock"
+              v-model="form.stockQuantity"
               :min="0"
+              :disabled="isEdit"
               style="width: 100%"
             />
+            <template v-if="isEdit" #extra>
+              <span style="color: #909399; font-size: 12px;">庫存需透過進貨單/銷貨單調整</span>
+            </template>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="最低庫存" prop="minStock">
+          <el-form-item label="最低庫存" prop="minStockLevel">
             <el-input-number
-              v-model="form.minStock"
+              v-model="form.minStockLevel"
               :min="0"
               style="width: 100%"
             />
@@ -73,16 +101,19 @@
         </el-col>
       </el-row>
       
-      <el-form-item label="狀態">
+      <el-form-item v-if="isEdit" label="狀態">
         <el-switch v-model="form.isActive" />
+        <span style="margin-left: 12px; color: #909399; font-size: 12px;">
+          {{ form.isActive ? '啟用' : '停用' }}
+        </span>
       </el-form-item>
     </el-form>
     
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" :loading="loading" @click="handleSubmit">
-          {{ isEdit ? '更新' : '創建' }}
+        <el-button @click="handleCancel">{{ isView ? '關閉' : '取消' }}</el-button>
+        <el-button v-if="!isView" type="primary" :loading="loading" @click="handleSubmit">
+          {{ isEdit ? '更新' : '建立' }}
         </el-button>
       </span>
     </template>
@@ -90,23 +121,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { categoriesApi } from '@/api/categories'
+import type { Category } from '@t-erp/shared'
 
 interface ProductForm {
   sku: string
   name: string
   description?: string
+  categoryId?: number
   unitPrice: number
   costPrice: number
-  stock: number
-  minStock: number
-  isActive: boolean
+  stockQuantity: number
+  minStockLevel: number
+  isActive?: boolean  // 可選，創建時不需要
 }
 
 interface Props {
   modelValue: boolean
-  data?: any
+  mode?: 'create' | 'edit' | 'view'
+  product?: any
 }
 
 interface Emits {
@@ -115,29 +150,33 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: false
+  modelValue: false,
+  mode: 'create'
 })
 
 const emit = defineEmits<Emits>()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+const categories = ref<Category[]>([])
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-const isEdit = computed(() => !!props.data?.id)
+const isEdit = computed(() => props.mode === 'edit')
+const isView = computed(() => props.mode === 'view')
 
 const form = reactive<ProductForm>({
   sku: '',
   name: '',
   description: '',
+  categoryId: undefined,
   unitPrice: 0,
   costPrice: 0,
-  stock: 0,
-  minStock: 0,
+  stockQuantity: 0,
+  minStockLevel: 0,
   isActive: true
 })
 
@@ -154,10 +193,10 @@ const rules: FormRules = {
   costPrice: [
     { required: true, message: '請輸入成本價', trigger: 'blur' }
   ],
-  stock: [
+  stockQuantity: [
     { required: true, message: '請輸入庫存', trigger: 'blur' }
   ],
-  minStock: [
+  minStockLevel: [
     { required: true, message: '請輸入最低庫存', trigger: 'blur' }
   ]
 }
@@ -167,28 +206,40 @@ const resetForm = () => {
     sku: '',
     name: '',
     description: '',
+    categoryId: undefined,
     unitPrice: 0,
     costPrice: 0,
-    stock: 0,
-    minStock: 0,
+    stockQuantity: 0,
+    minStockLevel: 0,
     isActive: true
   })
   formRef.value?.clearValidate()
 }
 
+// 取得分類列表
+const fetchCategories = async () => {
+  try {
+    const response = await categoriesApi.getCategories()
+    categories.value = response.data || []
+  } catch (error) {
+    console.error('取得分類列表失敗:', error)
+  }
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     loading.value = true
-    
-    emit('confirm', { ...form })
-    
-    ElMessage.success(isEdit.value ? '更新成功' : '創建成功')
-    visible.value = false
+
+    // 發出 confirm 事件，等待父元件處理 API
+    await emit('confirm', { ...form })
+
+    // API 成功後，父元件會關閉對話框
   } catch (error) {
-    console.error('表單驗證失敗:', error)
+    // 表單驗證失敗或 API 呼叫失敗
+    console.error('提交失敗:', error)
   } finally {
     loading.value = false
   }
@@ -202,22 +253,54 @@ const handleClosed = () => {
   resetForm()
 }
 
+// 當產品資料變化時更新表單
 watch(
-  () => props.data,
-  (newData) => {
-    if (newData && visible.value) {
-      Object.assign(form, newData)
+  () => props.product,
+  (newProduct) => {
+    if (newProduct && visible.value) {
+      Object.assign(form, {
+        sku: newProduct.sku || '',
+        name: newProduct.name || '',
+        description: newProduct.description || '',
+        categoryId: newProduct.categoryId || undefined,
+        unitPrice: newProduct.unitPrice || 0,
+        costPrice: newProduct.costPrice || 0,
+        stockQuantity: newProduct.stockQuantity || 0,
+        minStockLevel: newProduct.minStockLevel || 0,
+        isActive: newProduct.isActive ?? true
+      })
     }
   },
   { immediate: true }
 )
 
+// 當對話框打開/關閉時處理表單
 watch(visible, (newVisible) => {
-  if (newVisible && props.data) {
-    Object.assign(form, props.data)
-  } else if (!newVisible) {
+  if (newVisible) {
+    // 對話框打開時重新獲取分類列表
+    fetchCategories()
+
+    if (props.product) {
+      Object.assign(form, {
+        sku: props.product.sku || '',
+        name: props.product.name || '',
+        description: props.product.description || '',
+        categoryId: props.product.categoryId || undefined,
+        unitPrice: props.product.unitPrice || 0,
+        costPrice: props.product.costPrice || 0,
+        stockQuantity: props.product.stockQuantity || 0,
+        minStockLevel: props.product.minStockLevel || 0,
+        isActive: props.product.isActive ?? true
+      })
+    }
+  } else {
     resetForm()
   }
+})
+
+// 組件掛載時獲取分類列表
+onMounted(() => {
+  fetchCategories()
 })
 </script>
 
