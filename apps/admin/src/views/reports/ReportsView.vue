@@ -10,8 +10,8 @@
           <div class="report-icon">
             <el-icon size="40"><TrendCharts /></el-icon>
           </div>
-          <div class="report-title">銀售報表</div>
-          <div class="report-desc">檢視銀售資料和趋勢分析</div>
+          <div class="report-title">銷售報表</div>
+          <div class="report-desc">檢視銷售資料和趋勢分析</div>
         </el-card>
       </el-col>
       
@@ -63,7 +63,7 @@
             <el-icon size="40"><Box /></el-icon>
           </div>
           <div class="report-title">商品報表</div>
-          <div class="report-desc">檢視商品銀售和庫存分析</div>
+          <div class="report-desc">檢視商品銷售和庫存分析</div>
         </el-card>
       </el-col>
     </el-row>
@@ -78,15 +78,15 @@ import { TrendCharts, ShoppingCart, Grid, Money, User, Box } from '@element-plus
 const router = useRouter()
 
 const handleSalesReport = () => {
-  router.push('/sale-orders')
+  router.push('/reports/sales')
 }
 
 const handlePurchaseReport = () => {
-  router.push('/purchase-orders')
+  router.push('/reports/purchase')
 }
 
 const handleInventoryReport = () => {
-  router.push('/inventory')
+  router.push('/reports/inventory')
 }
 
 const handleFinancialReport = () => {
@@ -136,11 +136,11 @@ const handleProductReport = () => {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 8px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .report-desc {
-  color: #606266;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
   line-height: 1.4;
 }

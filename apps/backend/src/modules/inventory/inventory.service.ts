@@ -410,21 +410,23 @@ export class InventoryService {
    * 獲取商品排行榜
    */
   async getTopProducts(limit: number = 10, sortBy: 'stockQuantity' | 'stockValue' | 'turnover' = 'stockQuantity') {
-    let orderByField = 'product.stockQuantity'
-
-    if (sortBy === 'stockValue') {
-      orderByField = 'stockValue'
-    }
-
-    const products = await this.productRepository
+    const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .select('product.id', 'productId')
       .addSelect('product.name', 'productName')
       .addSelect('product.sku', 'productSku')
       .addSelect('product.stockQuantity', 'stockQuantity')
       .addSelect('product.unitCost', 'unitCost')
-      .addSelect('product.stockQuantity * product.unitCost', 'stockValue')
-      .orderBy(orderByField, 'DESC')
+      .addSelect('product.stock_quantity * product.unit_cost', 'stockValue')
+
+    // 使用實際欄位名稱排序，避免使用別名導致某些資料庫錯誤
+    if (sortBy === 'stockValue') {
+      queryBuilder.orderBy('product.stock_quantity * product.unit_cost', 'DESC')
+    } else {
+      queryBuilder.orderBy('product.stockQuantity', 'DESC')
+    }
+
+    const products = await queryBuilder
       .limit(limit)
       .getRawMany()
 

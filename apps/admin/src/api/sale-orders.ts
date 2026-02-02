@@ -167,6 +167,10 @@ export const saleOrdersApi = {
   updateSaleOrder: (id: number, data: UpdateSaleOrderDto) =>
     request.put<ApiResponse<SaleOrder>>(`/sale-orders/${id}`, data),
 
+  // 提交銷貨單（草稿 → 待確認）
+  submitSaleOrder: (id: number) =>
+    request.patch<ApiResponse<SaleOrder>>(`/sale-orders/${id}/submit`),
+
   // 確認銷貨單
   confirmSaleOrder: (id: number) =>
     request.patch<ApiResponse<SaleOrder>>(`/sale-orders/${id}/confirm`),

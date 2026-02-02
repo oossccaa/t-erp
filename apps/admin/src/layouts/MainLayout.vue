@@ -202,13 +202,19 @@ const sidebarWidth = computed(() => `${appStore.sidebarActualWidth}px`)
 // 菜單路由
 const menuRoutes = computed(() => {
   // 過濾出需要在導航中顯示的路由
-  return router.getRoutes().filter(route => {
+  const routes = router.getRoutes().filter(route => {
     return (
       route.path !== '/' &&
       route.meta?.title &&
       route.meta?.requiresAuth !== false &&
       !route.meta?.hidden
     )
+  })
+  // 按 order 屬性排序，確保儀表板在最前面
+  return routes.sort((a, b) => {
+    const orderA = (a.meta?.order as number) ?? 999
+    const orderB = (b.meta?.order as number) ?? 999
+    return orderA - orderB
   })
 })
 

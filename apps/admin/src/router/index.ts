@@ -30,6 +30,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '儀表板',
           icon: 'Dashboard',
+          order: 1,
         },
       },
       {
@@ -39,6 +40,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '產品管理',
           icon: 'Box',
+          order: 10,
         },
       },
       {
@@ -48,6 +50,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '分類管理',
           icon: 'Collection',
+          order: 11,
         },
       },
       {
@@ -57,6 +60,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '客戶管理',
           icon: 'User',
+          order: 20,
         },
       },
       {
@@ -66,6 +70,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '供應商管理',
           icon: 'OfficeBuilding',
+          order: 21,
         },
       },
       {
@@ -75,6 +80,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '進貨單',
           icon: 'ShoppingCart',
+          order: 30,
         },
       },
       {
@@ -84,6 +90,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '銷貨單',
           icon: 'Sell',
+          order: 31,
         },
       },
       {
@@ -93,6 +100,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '庫存管理',
           icon: 'Grid',
+          order: 40,
         },
       },
       {
@@ -102,6 +110,40 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '報表中心',
           icon: 'DataAnalysis',
+          order: 50,
+        },
+      },
+      {
+        path: 'reports/sales',
+        name: 'SalesReport',
+        component: () => import('@/views/reports/SalesReportView.vue'),
+        meta: {
+          title: '銷售報表',
+          icon: 'TrendCharts',
+          order: 51,
+          hidden: true,
+        },
+      },
+      {
+        path: 'reports/purchase',
+        name: 'PurchaseReport',
+        component: () => import('@/views/reports/PurchaseReportView.vue'),
+        meta: {
+          title: '採購報表',
+          icon: 'ShoppingCart',
+          order: 52,
+          hidden: true,
+        },
+      },
+      {
+        path: 'reports/inventory',
+        name: 'InventoryReport',
+        component: () => import('@/views/reports/InventoryReportView.vue'),
+        meta: {
+          title: '庫存報表',
+          icon: 'Grid',
+          order: 53,
+          hidden: true,
         },
       },
       {
@@ -111,6 +153,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '系統設定',
           icon: 'Setting',
+          order: 100,
         },
       },
     ],

@@ -175,8 +175,8 @@ export class SaleOrdersService {
   async update(id: number, updateDto: UpdateSaleOrderDto): Promise<SaleOrder> {
     const order = await this.findOne(id)
 
-    if (order.status !== SaleOrderStatus.DRAFT) {
-      throw new BadRequestException('只能修改草稿狀態的銷售單')
+    if (order.status !== SaleOrderStatus.PENDING) {
+      throw new BadRequestException('只能修改待確認狀態的銷售單')
     }
 
     // 如果更新了明細項目，需要重新計算金額
@@ -221,7 +221,23 @@ export class SaleOrdersService {
       updateDto.totalAmount = totalAmount
     }
 
-    await this.saleOrderRepository.update(id, updateDto)
+    // 從 updateDto 中排除 items，避免 TypeORM 嘗試處理 one-to-many 關係
+    const { items: _, ...updateData } = updateDto
+    await this.saleOrderRepository.update(id, updateData)
+    return this.findOne(id)
+  }
+
+  async submit(id: number): Promise<SaleOrder> {
+    const order = await this.findOne(id)
+
+    if (order.status !== SaleOrderStatus.DRAFT) {
+      throw new BadRequestException('只能提交草稿狀態的銷售單')
+    }
+
+    await this.saleOrderRepository.update(id, {
+      status: SaleOrderStatus.PENDING
+    })
+
     return this.findOne(id)
   }
 

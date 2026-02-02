@@ -183,10 +183,9 @@ export class SaleOrder extends BaseEntity {
     ].includes(this.status)
   }
 
-  // 檢查是否可以退回
+  // 檢查是否可以退回（只有已確認和處理中可以退回）
   get canRevert(): boolean {
     return [
-      SaleOrderStatus.PENDING,
       SaleOrderStatus.CONFIRMED,
       SaleOrderStatus.PROCESSING
     ].includes(this.status)
@@ -195,7 +194,6 @@ export class SaleOrder extends BaseEntity {
   // 獲取退回目標狀態
   get revertToStatus(): SaleOrderStatus | null {
     const statusMap: Partial<Record<SaleOrderStatus, SaleOrderStatus>> = {
-      [SaleOrderStatus.PENDING]: SaleOrderStatus.DRAFT,
       [SaleOrderStatus.CONFIRMED]: SaleOrderStatus.PENDING,
       [SaleOrderStatus.PROCESSING]: SaleOrderStatus.CONFIRMED,
     }

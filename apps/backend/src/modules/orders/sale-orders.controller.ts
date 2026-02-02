@@ -91,6 +91,14 @@ export class SaleOrdersController {
     return this.saleOrdersService.update(id, updateDto)
   }
 
+  @Patch(':id/submit')
+  @ApiOperation({ summary: '提交銷售單' })
+  @ApiResponse({ status: 200, description: '提交成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  async submit(@Param('id', ParseIntPipe) id: number) {
+    return this.saleOrdersService.submit(id)
+  }
+
   @Patch(':id/confirm')
   @ApiOperation({ summary: '確認銷售單' })
   @ApiResponse({ status: 200, description: '確認成功' })

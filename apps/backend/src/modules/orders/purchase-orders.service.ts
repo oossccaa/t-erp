@@ -12,7 +12,6 @@ import { Product } from '../products/entities/product.entity'
 import { User } from '../users/entities/user.entity'
 import { InventoryService } from '../inventory/inventory.service'
 import { InventoryTransactionType } from '../inventory/entities/inventory-transaction.entity'
-import { ApprovalService } from '../approval/approval.service'
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -26,7 +25,6 @@ export class PurchaseOrdersService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private inventoryService: InventoryService,
-    private approvalService: ApprovalService,
     private dataSource: DataSource,
   ) {}
 
@@ -78,29 +76,6 @@ export class PurchaseOrdersService {
     })
 
     const savedOrder = await this.purchaseOrderRepository.save(purchaseOrder)
-
-    // 如果需要審批，創建審批實例
-    if (savedOrder.status === PurchaseOrderStatus.PENDING || savedOrder.totalAmount > 0) {
-      try {
-        await this.approvalService.createApprovalInstance({
-          documentType: 'purchase_order',
-          documentId: savedOrder.id,
-          documentNumber: savedOrder.orderNumber,
-          title: `採購單 ${savedOrder.orderNumber}`,
-          description: `供應商: ${savedOrder.supplier?.name || ''}, 金額: ${savedOrder.totalAmount}`,
-          amount: savedOrder.totalAmount,
-          documentData: {
-            supplierId: savedOrder.supplierId,
-            orderDate: savedOrder.orderDate,
-            itemCount: savedOrder.items.length
-          },
-          submittedById: userId,
-        })
-      } catch (error) {
-        // 如果沒有匹配的審批流程，直接批准
-        console.log('No matching approval flow found, auto-approving')
-      }
-    }
 
     return savedOrder
   }

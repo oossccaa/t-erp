@@ -5,12 +5,12 @@ import { PurchaseOrderItem } from './entities/purchase-order-item.entity'
 import { SaleOrder } from './entities/sale-order.entity'
 import { SaleOrderItem } from './entities/sale-order-item.entity'
 import { Product } from '../products/entities/product.entity'
+import { User } from '../users/entities/user.entity'
 import { PurchaseOrdersController } from './purchase-orders.controller'
 import { SaleOrdersController } from './sale-orders.controller'
 import { PurchaseOrdersService } from './purchase-orders.service'
 import { SaleOrdersService } from './sale-orders.service'
 import { InventoryModule } from '../inventory/inventory.module'
-import { ApprovalModule } from '../approval/approval.module'
 
 @Module({
   imports: [
@@ -20,9 +20,9 @@ import { ApprovalModule } from '../approval/approval.module'
       SaleOrder,
       SaleOrderItem,
       Product,
+      User,
     ]),
     InventoryModule,
-    ApprovalModule,
   ],
   controllers: [PurchaseOrdersController, SaleOrdersController],
   providers: [PurchaseOrdersService, SaleOrdersService],

@@ -620,7 +620,7 @@ const handleSubmit = async () => {
     // 根據模式添加特定字段
     const submitData = isEdit.value
       ? baseData  // 編輯時不包含 customerId 和 status
-      : { ...baseData, customerId: form.customerId, status: 'pending' }  // 新建時包含
+      : { ...baseData, customerId: form.customerId, status: 'pending' }  // 新建時直接為待確認狀態
 
     // 發出 confirm 事件，等待父元件處理 API
     await emit('confirm', submitData)

@@ -13,7 +13,6 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module'
 import { CustomersModule } from './modules/customers/customers.module'
 import { OrdersModule } from './modules/orders/orders.module'
 import { InventoryModule } from './modules/inventory/inventory.module'
-import { ApprovalModule } from './modules/approval/approval.module'
 import { DatabaseConfig } from './config/database.config'
 
 @Module({
@@ -32,7 +31,6 @@ import { DatabaseConfig } from './config/database.config'
     CustomersModule,
     OrdersModule,
     InventoryModule,
-    ApprovalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

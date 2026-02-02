@@ -33,7 +33,6 @@
 
         <el-form-item label="狀態">
           <el-select v-model="filters.status" placeholder="請選擇狀態" clearable style="width: 150px">
-            <el-option label="草稿" value="draft" />
             <el-option label="待確認" value="pending" />
             <el-option label="已確認" value="confirmed" />
             <el-option label="處理中" value="processing" />
@@ -105,7 +104,7 @@
                 檢視
               </el-button>
               <el-button
-                v-if="row.status === 'draft' || row.status === 'pending'"
+                v-if="row.status === 'pending'"
                 size="small"
                 @click="handleEdit(row)"
               >
@@ -387,9 +386,9 @@ const canCancelOrder = (order: SaleOrder): boolean => {
   return !['completed', 'cancelled', 'returned'].includes(order.status)
 }
 
-// 判斷是否可以退回
+// 判斷是否可以退回（只有已確認和處理中可以退回）
 const canRevertOrder = (order: SaleOrder): boolean => {
-  return ['pending', 'confirmed', 'processing'].includes(order.status)
+  return ['confirmed', 'processing'].includes(order.status)
 }
 
 // 檢查是否有出貨記錄
@@ -401,7 +400,6 @@ const hasShippedItems = (order: SaleOrder | null): boolean => {
 // 取得退回目標狀態
 const getRevertTargetStatus = (currentStatus: SaleOrderStatus): SaleOrderStatus | null => {
   const statusMap: Record<string, SaleOrderStatus> = {
-    'pending': SaleOrderStatus.DRAFT,
     'confirmed': SaleOrderStatus.PENDING,
     'processing': SaleOrderStatus.CONFIRMED,
   }
