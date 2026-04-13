@@ -1,5 +1,5 @@
 import { request } from './request'
-import type { ApiResponse, PaginationResponse, Product } from '@t-erp/shared'
+import type { ApiResponse, PaginationResponse, Product } from '@/types'
 
 export interface CreateProductDto {
   sku: string

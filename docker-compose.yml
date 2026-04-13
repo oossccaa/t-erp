@@ -108,29 +108,7 @@ services:
       retries: 3
       start_period: 30s
 
-  # 客戶端應用
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: client-runtime
-    container_name: t-erp-client
-    restart: unless-stopped
-    ports:
-      - "3002:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - t-erp-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  # Nginx 反向代理和負載均衡
+# Nginx 反向代理和負載均衡
   nginx:
     build:
       context: ./docker/nginx
@@ -144,8 +122,6 @@ services:
       backend:
         condition: service_healthy
       admin:
-        condition: service_healthy
-      client:
         condition: service_healthy
     networks:
       - t-erp-network

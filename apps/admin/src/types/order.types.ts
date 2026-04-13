@@ -2,37 +2,33 @@ import type { BaseEntity } from './api.types'
 import type { Product, Supplier, Customer } from './product.types'
 import type { User } from './user.types'
 
-// 訂單狀態枚舉
 export enum OrderStatus {
-  DRAFT = 'draft',           // 草稿
-  PENDING = 'pending',       // 待審核
-  APPROVED = 'approved',     // 已審核
-  PROCESSING = 'processing', // 處理中
-  SHIPPED = 'shipped',       // 已出貨
-  DELIVERED = 'delivered',   // 已交付
-  COMPLETED = 'completed',   // 已完成
-  CANCELLED = 'cancelled',   // 已取消
-  RETURNED = 'returned',     // 已退貨
+  DRAFT = 'draft',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  PROCESSING = 'processing',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  RETURNED = 'returned',
 }
 
-// 訂單類型枚舉
 export enum OrderType {
-  PURCHASE = 'purchase',     // 進貨單
-  SALE = 'sale',            // 銷貨單
-  RETURN_PURCHASE = 'return_purchase', // 進貨退貨單
-  RETURN_SALE = 'return_sale',         // 銷貨退貨單
+  PURCHASE = 'purchase',
+  SALE = 'sale',
+  RETURN_PURCHASE = 'return_purchase',
+  RETURN_SALE = 'return_sale',
 }
 
-// 付款狀態枚舉
 export enum PaymentStatus {
-  UNPAID = 'unpaid',         // 未付款
-  PARTIAL = 'partial',       // 部分付款
-  PAID = 'paid',            // 已付款
-  OVERDUE = 'overdue',      // 逾期
-  REFUNDED = 'refunded',    // 已退款
+  UNPAID = 'unpaid',
+  PARTIAL = 'partial',
+  PAID = 'paid',
+  OVERDUE = 'overdue',
+  REFUNDED = 'refunded',
 }
 
-// 基礎訂單接口
 export interface BaseOrder extends BaseEntity {
   orderNumber: string
   orderType: OrderType
@@ -51,7 +47,6 @@ export interface BaseOrder extends BaseEntity {
   creator?: User
 }
 
-// 進貨單
 export interface PurchaseOrder extends BaseOrder {
   orderType: OrderType.PURCHASE
   supplierId: number
@@ -61,7 +56,6 @@ export interface PurchaseOrder extends BaseOrder {
   invoiceNumber?: string
 }
 
-// 銷貨單
 export interface SaleOrder extends BaseOrder {
   orderType: OrderType.SALE
   customerId: number
@@ -72,7 +66,6 @@ export interface SaleOrder extends BaseOrder {
   trackingNumber?: string
 }
 
-// 進貨單明細
 export interface PurchaseOrderItem extends BaseEntity {
   purchaseOrderId: number
   purchaseOrder?: PurchaseOrder
@@ -85,7 +78,6 @@ export interface PurchaseOrderItem extends BaseEntity {
   notes?: string
 }
 
-// 銷貨單明細
 export interface SaleOrderItem extends BaseEntity {
   saleOrderId: number
   saleOrder?: SaleOrder
@@ -99,7 +91,6 @@ export interface SaleOrderItem extends BaseEntity {
   notes?: string
 }
 
-// 訂單查詢參數
 export interface OrderQuery {
   page?: number
   limit?: number
@@ -115,7 +106,6 @@ export interface OrderQuery {
   sortOrder?: 'ASC' | 'DESC'
 }
 
-// 訂單統計
 export interface OrderStats {
   totalOrders: number
   pendingOrders: number
@@ -125,7 +115,6 @@ export interface OrderStats {
   averageOrderValue: number
 }
 
-// 進貨統計
 export interface PurchaseStats extends OrderStats {
   totalPurchases: number
   pendingPurchases: number
@@ -137,7 +126,6 @@ export interface PurchaseStats extends OrderStats {
   }>
 }
 
-// 銷貨統計
 export interface SaleStats extends OrderStats {
   totalSales: number
   pendingSales: number

@@ -96,7 +96,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, Edit, Delete } from '@element-plus/icons-vue'
-import type { Supplier } from '@t-erp/shared'
+import type { Supplier } from '@/types'
 import { suppliersApi } from '@/api/suppliers'
 import SupplierDialog from '@/components/suppliers/SupplierDialog.vue'
 

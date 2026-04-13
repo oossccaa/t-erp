@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { type FormInstance, type FormRules } from 'element-plus'
-import type { Supplier } from '@t-erp/shared'
+import type { Supplier } from '@/types'
 
 interface SupplierForm {
   name: string

@@ -49,7 +49,6 @@ export interface Customer extends BaseEntity {
   notes?: string
 }
 
-// 產品相關統計
 export interface ProductStats {
   totalProducts: number
   activeProducts: number
@@ -58,12 +57,10 @@ export interface ProductStats {
   categoryCount: number
 }
 
-// 分類樹節點
 export interface CategoryTreeNode extends TreeNode<Category> {
   productCount?: number
 }
 
-// 產品查詢參數
 export interface ProductQuery {
   page?: number
   limit?: number
@@ -77,7 +74,6 @@ export interface ProductQuery {
   maxPrice?: number
 }
 
-// 庫存調整記錄
 export interface StockAdjustment {
   productId: number
   product?: Product

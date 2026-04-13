@@ -240,7 +240,7 @@ import {
 import { productsApi } from '@/api/products'
 import { inventoryApi, InventoryTransactionType } from '@/api/inventory'
 import { categoriesApi } from '@/api/categories'
-import type { Product, Category } from '@t-erp/shared'
+import type { Product, Category } from '@/types'
 
 const loading = ref(false)
 const tableData = ref<Product[]>([])

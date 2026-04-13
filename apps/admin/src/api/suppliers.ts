@@ -1,5 +1,5 @@
 import { request } from './request'
-import type { ApiResponse, Supplier } from '@t-erp/shared'
+import type { ApiResponse, Supplier } from '@/types'
 
 export interface CreateSupplierDto {
   name: string

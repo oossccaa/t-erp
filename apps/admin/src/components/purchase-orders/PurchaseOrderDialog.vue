@@ -284,7 +284,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { suppliersApi } from '@/api/suppliers'
 import { productsApi } from '@/api/products'
-import type { Supplier, Product } from '@t-erp/shared'
+import type { Supplier, Product } from '@/types'
 import ProductListModal from '@/components/common/ProductListModal.vue'
 
 interface PurchaseOrderItem {

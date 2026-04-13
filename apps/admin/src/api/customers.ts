@@ -1,5 +1,5 @@
 import { request } from './request'
-import type { ApiResponse, Customer } from '@t-erp/shared'
+import type { ApiResponse, Customer } from '@/types'
 
 export interface CreateCustomerDto {
   name: string

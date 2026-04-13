@@ -124,7 +124,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { categoriesApi } from '@/api/categories'
-import type { Category } from '@t-erp/shared'
+import type { Category } from '@/types'
 
 interface ProductForm {
   sku: string

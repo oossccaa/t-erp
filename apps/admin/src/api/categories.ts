@@ -1,5 +1,5 @@
 import { request } from './request'
-import type { ApiResponse, Category } from '@t-erp/shared'
+import type { ApiResponse, Category } from '@/types'
 
 export interface CreateCategoryDto {
   name: string

@@ -224,7 +224,7 @@ import {
   Edit,
   CopyDocument,
 } from '@element-plus/icons-vue'
-import type { Product, Category } from '@t-erp/shared'
+import type { Product, Category } from '@/types'
 import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
 import ProductDialog from '@/components/products/ProductDialog.vue'

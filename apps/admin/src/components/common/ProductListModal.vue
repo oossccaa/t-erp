@@ -124,7 +124,7 @@ import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
-import type { Product, Category } from '@t-erp/shared'
+import type { Product, Category } from '@/types'
 
 interface Props {
   modelValue: boolean

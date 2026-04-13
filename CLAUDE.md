@@ -21,8 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 前端 (Vue3)
 - **框架**: Vue3 + TypeScript + Composition API
-- **管理後台**: Element Plus UI 庫
-- **行動客戶端**: Vant UI 庫  
+- **UI 庫**: Element Plus（支援響應式，桌面+手機共用）
 - **狀態管理**: Pinia
 - **路由**: Vue Router
 - **建置工具**: Vite
@@ -38,12 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 apps/
 ├── backend/         # NestJS API 服務 (port 3000)
-├── admin/          # 管理後台 (port 3001) 
-└── client/         # 行動客戶端 (port 3002)
-
-packages/
-├── shared/         # 共享 TypeScript 類型、常數、工具
-└── ui/            # 共享 Vue3 元件和設計 tokens
+└── admin/          # Vue3 前端（響應式，桌面+手機共用）(port 3001)
 ```
 
 ## 開發環境需求
@@ -111,7 +105,7 @@ pnpm test:e2e
 pnpm typecheck
 ```
 
-### 前端應用程式 (apps/admin/ 或 apps/client/)
+### 前端應用程式 (apps/admin/)
 ```bash
 # 啟動開發伺服器
 pnpm dev
@@ -276,7 +270,6 @@ pnpm dev
 - 使用 multi-stage Docker builds
 - `backend-runtime`: NestJS 應用伺服器
 - `admin-runtime`: 靜態檔案由 nginx 提供
-- `client-runtime`: 行動應用程式由 nginx 提供
 
 ## 常見問題排除
 

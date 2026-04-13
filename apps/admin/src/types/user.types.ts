@@ -1,5 +1,16 @@
-import { UserRole } from '../enums'
 import type { BaseEntity } from './api.types'
+
+export enum UserRole {
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  USER = 'user',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
 
 export interface User extends BaseEntity {
   username: string

@@ -71,7 +71,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import type { Category } from '@t-erp/shared'
+import type { Category } from '@/types'
 import { categoriesApi } from '@/api/categories'
 import CategoryDialog from '@/components/categories/CategoryDialog.vue'
 import { formatDateTime } from '@/utils/format'

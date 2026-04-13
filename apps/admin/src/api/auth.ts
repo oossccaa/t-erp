@@ -1,5 +1,5 @@
 import request from './request'
-import type { User } from '@t-erp/shared'
+import type { User } from '@/types'
 
 export interface LoginRequest {
   username: string

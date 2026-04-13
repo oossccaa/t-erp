@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { type FormInstance, type FormRules } from 'element-plus'
-import type { Category } from '@t-erp/shared'
+import type { Category } from '@/types'
 
 interface CategoryForm {
   name: string

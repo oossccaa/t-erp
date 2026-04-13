@@ -1,37 +1,30 @@
 import type { BaseEntity } from './api.types'
 import type { Product } from './product.types'
 import type { User } from './user.types'
-import type { PurchaseOrder, SaleOrder } from './order.types'
 
-// 庫存異動類型枚舉
 export enum InventoryTransactionType {
-  // 入庫類型
-  PURCHASE_IN = 'purchase_in',           // 進貨入庫
-  RETURN_IN = 'return_in',               // 退貨入庫
-  ADJUSTMENT_IN = 'adjustment_in',       // 調整入庫
-  TRANSFER_IN = 'transfer_in',           // 調撥入庫
-  PRODUCTION_IN = 'production_in',       // 生產入庫
-  
-  // 出庫類型
-  SALE_OUT = 'sale_out',                 // 銷貨出庫
-  RETURN_OUT = 'return_out',             // 退貨出庫
-  ADJUSTMENT_OUT = 'adjustment_out',     // 調整出庫
-  TRANSFER_OUT = 'transfer_out',         // 調撥出庫
-  DAMAGE_OUT = 'damage_out',             // 損耗出庫
-  CONSUMPTION_OUT = 'consumption_out',   // 消耗出庫
+  PURCHASE_IN = 'purchase_in',
+  RETURN_IN = 'return_in',
+  ADJUSTMENT_IN = 'adjustment_in',
+  TRANSFER_IN = 'transfer_in',
+  PRODUCTION_IN = 'production_in',
+  SALE_OUT = 'sale_out',
+  RETURN_OUT = 'return_out',
+  ADJUSTMENT_OUT = 'adjustment_out',
+  TRANSFER_OUT = 'transfer_out',
+  DAMAGE_OUT = 'damage_out',
+  CONSUMPTION_OUT = 'consumption_out',
 }
 
-// 庫存狀態枚舉
 export enum InventoryStatus {
-  NORMAL = 'normal',                     // 正常
-  LOW_STOCK = 'low_stock',              // 低庫存
-  OUT_OF_STOCK = 'out_of_stock',        // 缺貨
-  OVERSTOCKED = 'overstocked',          // 庫存過多
-  DAMAGED = 'damaged',                   // 已損壞
-  RESERVED = 'reserved',                 // 已預留
+  NORMAL = 'normal',
+  LOW_STOCK = 'low_stock',
+  OUT_OF_STOCK = 'out_of_stock',
+  OVERSTOCKED = 'overstocked',
+  DAMAGED = 'damaged',
+  RESERVED = 'reserved',
 }
 
-// 庫存異動記錄
 export interface InventoryTransaction extends BaseEntity {
   productId: number
   product?: Product
@@ -52,7 +45,6 @@ export interface InventoryTransaction extends BaseEntity {
   expiryDate?: Date
 }
 
-// 庫存快照（每日庫存記錄）
 export interface InventorySnapshot extends BaseEntity {
   productId: number
   product?: Product
@@ -65,7 +57,6 @@ export interface InventorySnapshot extends BaseEntity {
   status: InventoryStatus
 }
 
-// 庫存調整單
 export interface InventoryAdjustment extends BaseEntity {
   adjustmentNumber: string
   adjustmentDate: Date
@@ -82,7 +73,6 @@ export interface InventoryAdjustment extends BaseEntity {
   approvedAt?: Date
 }
 
-// 庫存調整明細
 export interface InventoryAdjustmentItem extends BaseEntity {
   adjustmentId: number
   adjustment?: InventoryAdjustment
@@ -97,7 +87,6 @@ export interface InventoryAdjustmentItem extends BaseEntity {
   notes?: string
 }
 
-// 庫存轉移/調撥
 export interface InventoryTransfer extends BaseEntity {
   transferNumber: string
   transferDate: Date
@@ -115,7 +104,6 @@ export interface InventoryTransfer extends BaseEntity {
   completedAt?: Date
 }
 
-// 庫存轉移明細
 export interface InventoryTransferItem extends BaseEntity {
   transferId: number
   transfer?: InventoryTransfer
@@ -127,7 +115,6 @@ export interface InventoryTransferItem extends BaseEntity {
   notes?: string
 }
 
-// 庫存查詢參數
 export interface InventoryQuery {
   page?: number
   limit?: number
@@ -142,7 +129,6 @@ export interface InventoryQuery {
   sortOrder?: 'ASC' | 'DESC'
 }
 
-// 庫存統計
 export interface InventoryStats {
   totalProducts: number
   totalQuantity: number
@@ -163,7 +149,6 @@ export interface InventoryStats {
   }>
 }
 
-// 庫存預警配置
 export interface InventoryAlert {
   id: number
   productId: number
@@ -175,7 +160,6 @@ export interface InventoryAlert {
   createdAt: Date
 }
 
-// 庫存報表數據
 export interface InventoryReport {
   reportDate: Date
   productId: number

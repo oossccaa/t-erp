@@ -30,11 +30,7 @@ export default defineConfig({
     },
   },
 
-  optimizeDeps: {
-    exclude: ['@t-erp/ui', '@t-erp/shared'],
-  },
-
-  server: {
+server: {
     port: 3001,
     proxy: {
       '/api': {

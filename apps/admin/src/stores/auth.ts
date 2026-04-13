@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User as BaseUser } from '@t-erp/shared'
+import type { User as BaseUser } from '@/types'
 import { authApi } from '@/api/auth'
 import { ElMessage } from 'element-plus'
 

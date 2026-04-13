@@ -5,7 +5,6 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"],
-      "@t-erp/shared": ["../../packages/shared/src"]
     },
     "types": ["jest", "node"],
     "target": "ES2020",

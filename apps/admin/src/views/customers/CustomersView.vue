@@ -96,7 +96,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, Edit, Delete } from '@element-plus/icons-vue'
-import type { Customer } from '@t-erp/shared'
+import type { Customer } from '@/types'
 import { customersApi } from '@/api/customers'
 import CustomerDialog from '@/components/customers/CustomerDialog.vue'
 
