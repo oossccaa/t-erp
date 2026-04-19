@@ -48,13 +48,13 @@ services:
     container_name: t-erp-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@t-erp.local
+      PGADMIN_DEFAULT_EMAIL: admin@terp.dev
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     ports:
-      - "8080:80"
+      - "8082:80"
     networks:
       - t-erp-dev-network
     depends_on:

@@ -6,6 +6,12 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:a": "DB_NAME=t_erp_a turbo run dev",
+    "dev:b": "DB_NAME=t_erp_b turbo run dev",
+    "dev:demo": "DB_NAME=t_erp_demo turbo run dev",
+    "seed:a": "pnpm --filter @t-erp/backend seed:a",
+    "seed:b:restore": "pnpm --filter @t-erp/backend seed:b:restore",
+    "seed:demo:admin": "pnpm --filter @t-erp/backend seed:demo:admin",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
@@ -28,5 +34,5 @@
     "turbo": "^2.5.5",
     "typescript": "^5.1.0"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@10.33.0"
 }
