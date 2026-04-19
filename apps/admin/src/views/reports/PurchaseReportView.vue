@@ -149,12 +149,12 @@
         </el-table-column>
         <el-table-column prop="amount" label="採購額" width="150" align="right">
           <template #default="{ row }">
-            ¥{{ row.amount.toLocaleString() }}
+            NT$ {{ row.amount.toLocaleString() }}
           </template>
         </el-table-column>
         <el-table-column prop="avgAmount" label="平均金額" align="right">
           <template #default="{ row }">
-            ¥{{ row.avgAmount.toLocaleString() }}
+            NT$ {{ row.avgAmount.toLocaleString() }}
           </template>
         </el-table-column>
       </el-table>
@@ -186,6 +186,9 @@ import {
   CircleCheck,
   Loading
 } from '@element-plus/icons-vue'
+import { useChartTheme } from '@/composables/useChartTheme'
+
+const { textColor } = useChartTheme()
 
 // 註冊 ECharts 組件
 use([
@@ -300,6 +303,7 @@ const statusColorMap: Record<string, string> = {
 
 // 採購趨勢圖表配置
 const trendChartOption = computed(() => ({
+  textStyle: { color: textColor.value },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -307,18 +311,22 @@ const trendChartOption = computed(() => ({
     },
     formatter: (params: any) => {
       if (!params || params.length === 0) return ''
-      const date = params[0].axisValue
+      const raw = params[0].axisValue
+      const d = dayjs(raw)
+      const date = d.isValid() ? d.format('YYYY-MM-DD') : raw
       let result = `${date}<br/>`
       params.forEach((param: any) => {
-        const unit = param.seriesName === '採購額' ? ' 元' : ' 筆'
-        result += `${param.marker}${param.seriesName}: ${param.value.toLocaleString()}${unit}<br/>`
+        const prefix = param.seriesName === '採購額' ? 'NT$ ' : ''
+        const suffix = param.seriesName === '採購額' ? '' : ' 筆'
+        result += `${param.marker}${param.seriesName}: ${prefix}${Number(param.value).toLocaleString()}${suffix}<br/>`
       })
       return result
     }
   },
   legend: {
     data: ['採購額', '訂單數'],
-    top: 0
+    top: 0,
+    textStyle: { color: textColor.value }
   },
   grid: {
     left: '3%',
@@ -330,9 +338,17 @@ const trendChartOption = computed(() => ({
   xAxis: {
     type: 'category',
     data: reportData.trend.map(item => item.date),
+    axisPointer: {
+      label: {
+        formatter: (p: any) => {
+          const d = dayjs(p.value)
+          return d.isValid() ? d.format('YYYY-MM-DD') : p.value
+        }
+      }
+    },
     axisLabel: {
       rotate: reportData.trend.length > 15 ? 45 : 0,
-      formatter: (value: string) => dayjs(value).format('MM-DD')
+      formatter: (value: string) => dayjs(value).isValid() ? dayjs(value).format('MM-DD') : value
     }
   },
   yAxis: [
@@ -385,6 +401,7 @@ const trendChartOption = computed(() => ({
 
 // 狀態分布餅圖配置
 const statusChartOption = computed(() => ({
+  textStyle: { color: textColor.value },
   tooltip: {
     trigger: 'item',
     formatter: '{b}: {c} 筆 ({d}%)'
@@ -392,7 +409,8 @@ const statusChartOption = computed(() => ({
   legend: {
     orient: 'vertical',
     left: 'left',
-    top: 'center'
+    top: 'center',
+    textStyle: { color: textColor.value }
   },
   series: [
     {

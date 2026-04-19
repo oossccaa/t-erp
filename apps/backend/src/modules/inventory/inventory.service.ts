@@ -68,6 +68,40 @@ export class InventoryService {
     return transaction
   }
 
+  // 庫存盤點：接收 [{productId, actualQty}]，對每個有差異的項目寫 adjustment 並更新 stock
+  async stocktake(
+    items: Array<{ productId: number; actualQty: number; notes?: string }>,
+    userId: number,
+  ): Promise<{ adjusted: number; skipped: number }> {
+    let adjusted = 0
+    let skipped = 0
+
+    for (const item of items) {
+      const product = await this.productRepository.findOne({ where: { id: item.productId } })
+      if (!product) continue
+
+      const diff = Number(item.actualQty) - Number(product.stockQuantity)
+      if (diff === 0) {
+        skipped++
+        continue
+      }
+
+      await this.recordTransaction({
+        productId: item.productId,
+        type: diff > 0
+          ? InventoryTransactionType.ADJUSTMENT_INCREASE
+          : InventoryTransactionType.ADJUSTMENT_DECREASE,
+        quantityChanged: diff,
+        reason: '盤點調整',
+        notes: item.notes,
+        createdById: userId,
+      })
+      adjusted++
+    }
+
+    return { adjusted, skipped }
+  }
+
   // 獲取產品庫存異動記錄
   async getProductTransactions(productId: number, query?: {
     startDate?: string
@@ -130,6 +164,7 @@ export class InventoryService {
         'product.stockQuantity',
         'product.minStockLevel',
         'product.unitCost',
+        'product.costPrice',
         'category.name'
       ])
 
@@ -144,9 +179,11 @@ export class InventoryService {
     const products = await queryBuilder.getMany()
 
     const totalProducts = products.length
-    const totalInventoryValue = products.reduce((sum, product) => 
-      sum + (product.stockQuantity * (product.unitCost || 0)), 0
-    )
+    const totalInventoryValue = products.reduce((sum, product) => {
+      // 優先用移動平均成本，若未計算過則退回使用者設定的 costPrice
+      const cost = Number(product.unitCost) || Number(product.costPrice) || 0
+      return sum + Number(product.stockQuantity) * cost
+    }, 0)
     const lowStockProducts = products.filter(product => 
       product.stockQuantity <= product.minStockLevel
     ).length

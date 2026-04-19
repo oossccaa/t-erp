@@ -57,6 +57,9 @@
         <el-table-column prop="contactPerson" label="聯繫人" width="120" />
         <el-table-column prop="phone" label="電話" width="140" />
         <el-table-column prop="email" label="電子郵箱" min-width="180" />
+        <el-table-column prop="taxId" label="統一編號" width="120">
+          <template #default="{ row }">{{ row.taxId || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="address" label="地址" min-width="200" show-overflow-tooltip />
         <el-table-column prop="isActive" label="狀態" width="80">
           <template #default="{ row }">
@@ -68,7 +71,7 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button-group>
+            <div class="action-buttons">
               <el-button size="small" @click="handleEdit(row)">
                 <el-icon><Edit /></el-icon>
                 編輯
@@ -77,7 +80,7 @@
                 <el-icon><Delete /></el-icon>
                 刪除
               </el-button>
-            </el-button-group>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -196,8 +199,8 @@ const handleDialogConfirm = async (formData: any) => {
     dialogVisible.value = false
     loadData()
   } catch (error: any) {
-    ElMessage.error(error.message || (currentSupplier.value?.id ? '更新失敗' : '建立失敗'))
-    throw error // 讓 dialog 知道失敗，不要關閉
+    // 錯誤訊息已由 request.ts 攔截器處理
+    throw error
   }
 }
 
@@ -281,6 +284,16 @@ onMounted(() => {
         margin-left: 0 !important;
       }
     }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 </style>

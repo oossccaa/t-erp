@@ -4,7 +4,7 @@
       <!-- Logo 和標題 -->
       <div class="login-header">
         <div class="logo">
-          <el-icon size="48" color="#409eff">
+          <el-icon size="48" color="#3d8b7f">
             <Box />
           </el-icon>
         </div>
@@ -191,7 +191,7 @@ if (rememberedUsername) {
 .login-container {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5eb8a8 0%, #3d8b7f 100%);
   display: flex;
   justify-content: center;
   align-items: center;

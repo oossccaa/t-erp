@@ -18,6 +18,9 @@ export interface AppState {
   showTabs: boolean
   keepAlive: boolean
 
+  // 響應式狀態
+  isMobile: boolean
+
   // 網路狀態
   isOnline: boolean
   loading: boolean
@@ -26,7 +29,7 @@ export interface AppState {
 export const useAppStore = defineStore('app', {
   state: (): AppState => ({
     isDark: localStorage.getItem('theme') === 'dark',
-    themeColor: localStorage.getItem('themeColor') || '#409eff',
+    themeColor: localStorage.getItem('themeColor') || '#3d8b7f',
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     sidebarWidth: 240,
     locale: (localStorage.getItem('locale') as AppState['locale']) || 'zh-TW',
@@ -34,24 +37,45 @@ export const useAppStore = defineStore('app', {
     showBreadcrumb: localStorage.getItem('showBreadcrumb') !== 'false',
     showTabs: localStorage.getItem('showTabs') !== 'false',
     keepAlive: localStorage.getItem('keepAlive') !== 'false',
+    isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
     isOnline: navigator.onLine,
     loading: false,
   }),
   
   getters: {
     theme: (state) => state.isDark ? 'dark' : 'light',
-    sidebarActualWidth: (state) => state.sidebarCollapsed ? 64 : state.sidebarWidth,
+    sidebarActualWidth: (state) => state.isMobile ? 0 : (state.sidebarCollapsed ? 64 : state.sidebarWidth),
   },
   
   actions: {
+    // 應用完整的 primary 色階（包含 light-3 ~ light-9 和 dark-2）
+    applyPrimaryColor(color: string) {
+      const el = document.documentElement
+      const mix = (c1: string, c2: string, weight: number) => {
+        const hex = (c: string) => c.replace('#', '').match(/.{2}/g)!.map(x => parseInt(x, 16))
+        const [r1, g1, b1] = hex(c1)
+        const [r2, g2, b2] = hex(c2)
+        const r = Math.round(r1 * (1 - weight) + r2 * weight)
+        const g = Math.round(g1 * (1 - weight) + g2 * weight)
+        const b = Math.round(b1 * (1 - weight) + b2 * weight)
+        return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`
+      }
+      const mixTarget = this.isDark ? '#141414' : '#ffffff'
+      el.style.setProperty('--el-color-primary', color)
+      for (let i = 1; i <= 9; i++) {
+        el.style.setProperty(`--el-color-primary-light-${i}`, mix(color, mixTarget, i * 0.1))
+      }
+      el.style.setProperty('--el-color-primary-dark-2', mix(color, '#000000', 0.2))
+    },
+
     // 初始化主題
     initTheme() {
       // 應用當前主題到 DOM
       document.documentElement.classList.toggle('dark', this.isDark)
 
-      // 應用主題顏色
+      // 應用主題顏色（含完整色階）
       if (this.themeColor) {
-        document.documentElement.style.setProperty('--el-color-primary', this.themeColor)
+        this.applyPrimaryColor(this.themeColor)
       }
 
       // 監聽系統主題變更
@@ -59,6 +83,9 @@ export const useAppStore = defineStore('app', {
 
       // 監聽網路狀態
       this.watchOnlineStatus()
+
+      // 監聽螢幕寬度
+      this.watchScreenSize()
     },
 
     // 切換主題
@@ -68,15 +95,16 @@ export const useAppStore = defineStore('app', {
 
       // 更新 Element Plus 主題
       document.documentElement.classList.toggle('dark', this.isDark)
+
+      // 重新套用主色階（因 dark/light 下 mix 目標色不同）
+      this.applyPrimaryColor(this.themeColor)
     },
-    
+
     // 設定主題顏色
     setThemeColor(color: string) {
       this.themeColor = color
       localStorage.setItem('themeColor', color)
-      
-      // 更新 CSS 變數
-      document.documentElement.style.setProperty('--el-color-primary', color)
+      this.applyPrimaryColor(color)
     },
     
     // 切換側邊欄
@@ -142,6 +170,16 @@ export const useAppStore = defineStore('app', {
       }
     },
     
+    // 監聽螢幕寬度
+    watchScreenSize() {
+      if (typeof window !== 'undefined') {
+        const onResize = () => {
+          this.isMobile = window.innerWidth < 768
+        }
+        window.addEventListener('resize', onResize)
+      }
+    },
+
     // 監聽網絡狀態
     watchOnlineStatus() {
       if (typeof window !== 'undefined') {
@@ -175,7 +213,7 @@ export const useAppStore = defineStore('app', {
       
       // 重設狀態
       this.isDark = false
-      this.themeColor = '#409eff'
+      this.themeColor = '#3d8b7f'
       this.sidebarCollapsed = false
       this.locale = 'zh-TW'
       this.pageSize = 10

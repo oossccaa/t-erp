@@ -1,20 +1,75 @@
 <template>
   <el-container class="main-layout">
-    <!-- 左側導航 -->
+    <!-- 手機版：抽屜導航 -->
+    <el-drawer
+      v-if="appStore.isMobile"
+      v-model="mobileMenuOpen"
+      direction="ltr"
+      :size="240"
+      :show-close="false"
+      :with-header="false"
+    >
+      <div class="sidebar-header">
+        <div class="logo">
+          <el-icon size="28" color="#3d8b7f"><Box /></el-icon>
+          <span class="logo-text">T-ERP</span>
+        </div>
+      </div>
+      <el-scrollbar class="sidebar-menu">
+        <el-menu
+          :default-active="currentRoute"
+          :unique-opened="true"
+          router
+          class="sidebar-menu-content"
+          @select="mobileMenuOpen = false"
+        >
+          <template v-for="route in menuRoutes" :key="route.name">
+            <el-menu-item
+              v-if="!route.children?.length"
+              :index="route.path"
+              :disabled="route.meta?.disabled"
+            >
+              <el-icon v-if="route.meta?.icon">
+                <component :is="route.meta.icon" />
+              </el-icon>
+              <template #title>{{ route.meta?.title }}</template>
+            </el-menu-item>
+            <el-sub-menu v-else :index="route.path" :disabled="route.meta?.disabled">
+              <template #title>
+                <el-icon v-if="route.meta?.icon"><component :is="route.meta.icon" /></el-icon>
+                <span>{{ route.meta?.title }}</span>
+              </template>
+              <el-menu-item
+                v-for="child in route.children"
+                :key="child.name"
+                :index="child.path"
+                :disabled="child.meta?.disabled"
+              >
+                <el-icon v-if="child.meta?.icon"><component :is="child.meta.icon" /></el-icon>
+                <template #title>{{ child.meta?.title }}</template>
+              </el-menu-item>
+            </el-sub-menu>
+          </template>
+        </el-menu>
+      </el-scrollbar>
+    </el-drawer>
+
+    <!-- 桌面版：側邊導航 -->
     <el-aside
+      v-if="!appStore.isMobile"
       :width="sidebarWidth"
       class="sidebar"
       :class="{ collapsed: appStore.sidebarCollapsed }"
     >
       <div class="sidebar-header">
         <div class="logo">
-          <el-icon v-if="!appStore.sidebarCollapsed" size="28" color="#409eff">
+          <el-icon v-if="!appStore.sidebarCollapsed" size="28" color="#3d8b7f">
             <Box />
           </el-icon>
           <span v-if="!appStore.sidebarCollapsed" class="logo-text">T-ERP</span>
         </div>
       </div>
-      
+
       <el-scrollbar class="sidebar-menu">
         <el-menu
           :default-active="currentRoute"
@@ -36,7 +91,7 @@
                 {{ route.meta?.title }}
               </template>
             </el-menu-item>
-            
+
             <el-sub-menu
               v-else
               :index="route.path"
@@ -48,7 +103,7 @@
                 </el-icon>
                 <span>{{ route.meta?.title }}</span>
               </template>
-              
+
               <el-menu-item
                 v-for="child in route.children"
                 :key="child.name"
@@ -73,11 +128,11 @@
       <!-- 頂部導航欄 -->
       <el-header class="main-header">
         <div class="header-left">
-          <!-- 折疊按鈕 -->
+          <!-- 折疊/漢堡按鈕 -->
           <el-button
             text
-            :icon="appStore.sidebarCollapsed ? Expand : Fold"
-            @click="appStore.toggleSidebar()"
+            :icon="appStore.isMobile ? Operation : (appStore.sidebarCollapsed ? Expand : Fold)"
+            @click="appStore.isMobile ? (mobileMenuOpen = true) : appStore.toggleSidebar()"
           />
           
           <!-- 面包屑 -->
@@ -97,8 +152,8 @@
         </div>
         
         <div class="header-right">
-          <!-- 全屏切換 -->
-          <el-tooltip content="全屏" placement="bottom">
+          <!-- 全屏切換（手機隱藏）-->
+          <el-tooltip v-if="!appStore.isMobile" content="全屏" placement="bottom">
             <el-button
               text
               :icon="isFullscreen ? OfficeBuilding : FullScreen"
@@ -127,10 +182,6 @@
             
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>
-                  個人資料
-                </el-dropdown-item>
                 <el-dropdown-item command="settings">
                   <el-icon><Setting /></el-icon>
                   設定
@@ -166,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFullscreen } from '@vueuse/core'
 import {
@@ -181,6 +232,7 @@ import {
   ArrowDown,
   Setting,
   SwitchButton,
+  Operation,
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
@@ -192,6 +244,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const { isFullscreen, toggle } = useFullscreen()
+const mobileMenuOpen = ref(false)
 
 // 當前路由
 const currentRoute = computed(() => route.path)
@@ -242,11 +295,6 @@ const keepAliveNames = computed(() => {
 // 用戶菜單處理
 const handleUserCommand = async (command: string) => {
   switch (command) {
-    case 'profile':
-      // 跳轉到個人資料頁面
-      router.push('/profile')
-      break
-      
     case 'settings':
       // 跳轉到設定頁面
       router.push('/settings')

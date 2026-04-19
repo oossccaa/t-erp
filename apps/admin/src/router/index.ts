@@ -154,6 +154,7 @@ const routes: RouteRecordRaw[] = [
           title: '系統設定',
           icon: 'Setting',
           order: 100,
+          hidden: true, // 功能未實作，暫時隱藏選單入口
         },
       },
     ],

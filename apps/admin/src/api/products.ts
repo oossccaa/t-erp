@@ -13,7 +13,9 @@ export interface CreateProductDto {
   // 注意：isActive 不在 CreateProductDto 中，後端會自動設為 true
 }
 
-export interface UpdateProductDto extends Partial<CreateProductDto> {}
+export interface UpdateProductDto extends Partial<CreateProductDto> {
+  isActive?: boolean
+}
 
 export interface ProductQuery {
   page?: number

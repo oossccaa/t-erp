@@ -50,9 +50,9 @@
         <el-card shadow="hover" class="stat-card">
           <el-statistic title="總銷售額" :value="reportData.summary.totalAmount" :precision="2">
             <template #prefix>
-              <el-icon style="color: #409EFF"><Money /></el-icon>
+              <el-icon style="color: #3d8b7f"><Money /></el-icon>
+              <span style="margin-left: 4px;">NT$</span>
             </template>
-            <template #suffix>元</template>
           </el-statistic>
         </el-card>
       </el-col>
@@ -71,8 +71,8 @@
           <el-statistic title="平均訂單金額" :value="reportData.summary.avgOrderValue" :precision="2">
             <template #prefix>
               <el-icon style="color: #E6A23C"><TrendCharts /></el-icon>
+              <span style="margin-left: 4px;">NT$</span>
             </template>
-            <template #suffix>元</template>
           </el-statistic>
         </el-card>
       </el-col>
@@ -140,20 +140,24 @@
         <span>每日銷售明細</span>
       </template>
       <el-table :data="reportData.trend" stripe v-loading="loading">
-        <el-table-column prop="date" label="日期" width="120" />
-        <el-table-column prop="orderCount" label="訂單數" width="100" align="right">
+        <el-table-column label="日期" min-width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.date) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="orderCount" label="訂單數" min-width="120" align="right">
           <template #default="{ row }">
             {{ row.orderCount }} 筆
           </template>
         </el-table-column>
-        <el-table-column prop="amount" label="銷售額" width="150" align="right">
+        <el-table-column prop="amount" label="銷售額" min-width="180" align="right">
           <template #default="{ row }">
-            ¥{{ row.amount.toLocaleString() }}
+            NT$ {{ row.amount.toLocaleString() }}
           </template>
         </el-table-column>
-        <el-table-column prop="avgAmount" label="平均金額" align="right">
+        <el-table-column prop="avgAmount" label="平均金額" min-width="180" align="right">
           <template #default="{ row }">
-            ¥{{ row.avgAmount.toLocaleString() }}
+            NT$ {{ row.avgAmount.toLocaleString() }}
           </template>
         </el-table-column>
       </el-table>
@@ -185,6 +189,9 @@ import {
   CircleCheck,
   Loading
 } from '@element-plus/icons-vue'
+import { useChartTheme } from '@/composables/useChartTheme'
+
+const { textColor } = useChartTheme()
 
 // 註冊 ECharts 組件
 use([
@@ -201,6 +208,16 @@ use([
 // 狀態
 const loading = ref(false)
 const exporting = ref(false)
+
+// 統一日期格式：每日彙整顯示 yyyy-mm-dd（無時分），含時間的顯示 yyyy-mm-dd hh:mm
+const formatDate = (value: any) => {
+  if (!value) return ''
+  const d = dayjs(value)
+  if (!d.isValid()) return String(value)
+  // 若無時分（純日期）就只顯示日期
+  const hasTime = String(value).includes('T') || String(value).includes(':')
+  return d.format(hasTime ? 'YYYY-MM-DD HH:mm' : 'YYYY-MM-DD')
+}
 
 // 篩選表單
 const filterForm = reactive({
@@ -299,6 +316,7 @@ const statusColorMap: Record<string, string> = {
 
 // 銷售趨勢圖表配置
 const trendChartOption = computed(() => ({
+  textStyle: { color: textColor.value },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -306,18 +324,20 @@ const trendChartOption = computed(() => ({
     },
     formatter: (params: any) => {
       if (!params || params.length === 0) return ''
-      const date = params[0].axisValue
+      const date = formatDate(params[0].axisValue)
       let result = `${date}<br/>`
       params.forEach((param: any) => {
-        const unit = param.seriesName === '銷售額' ? ' 元' : ' 筆'
-        result += `${param.marker}${param.seriesName}: ${param.value.toLocaleString()}${unit}<br/>`
+        const prefix = param.seriesName === '銷售額' ? 'NT$ ' : ''
+        const suffix = param.seriesName === '銷售額' ? '' : ' 筆'
+        result += `${param.marker}${param.seriesName}: ${prefix}${param.value.toLocaleString()}${suffix}<br/>`
       })
       return result
     }
   },
   legend: {
     data: ['銷售額', '訂單數'],
-    top: 0
+    top: 0,
+    textStyle: { color: textColor.value }
   },
   grid: {
     left: '3%',
@@ -329,9 +349,17 @@ const trendChartOption = computed(() => ({
   xAxis: {
     type: 'category',
     data: reportData.trend.map(item => item.date),
+    axisPointer: {
+      label: {
+        formatter: (p: any) => {
+          const d = dayjs(p.value)
+          return d.isValid() ? d.format('YYYY-MM-DD') : p.value
+        }
+      }
+    },
     axisLabel: {
       rotate: reportData.trend.length > 15 ? 45 : 0,
-      formatter: (value: string) => dayjs(value).format('MM-DD')
+      formatter: (value: string) => dayjs(value).isValid() ? dayjs(value).format('MM-DD') : value
     }
   },
   yAxis: [
@@ -384,6 +412,7 @@ const trendChartOption = computed(() => ({
 
 // 狀態分布餅圖配置
 const statusChartOption = computed(() => ({
+  textStyle: { color: textColor.value },
   tooltip: {
     trigger: 'item',
     formatter: '{b}: {c} 筆 ({d}%)'
@@ -391,7 +420,8 @@ const statusChartOption = computed(() => ({
   legend: {
     orient: 'vertical',
     left: 'left',
-    top: 'center'
+    top: 'center',
+    textStyle: { color: textColor.value }
   },
   series: [
     {

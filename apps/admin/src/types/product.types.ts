@@ -30,6 +30,7 @@ export interface Supplier extends BaseEntity {
   phone?: string
   email?: string
   address?: string
+  taxId?: string
   isActive: boolean
   supplierCode?: string
   paymentTerms?: string
@@ -42,6 +43,7 @@ export interface Customer extends BaseEntity {
   phone?: string
   email?: string
   address?: string
+  taxId?: string
   isActive: boolean
   customerCode?: string
   creditLimit?: number

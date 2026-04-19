@@ -33,12 +33,6 @@
           :value="category.id"
         />
       </el-select>
-      <el-switch
-        v-model="activeOnly"
-        active-text="僅顯示啟用"
-        style="margin-left: 12px"
-        @change="handleSearch"
-      />
     </div>
 
     <!-- 產品列表 -->
@@ -154,10 +148,9 @@ const products = ref<Product[]>([])
 const categories = ref<Category[]>([])
 const selectedProduct = ref<Product | null>(null)
 
-// 搜尋和篩選
+// 搜尋和篩選（永遠只顯示啟用的產品）
 const searchKeyword = ref('')
 const categoryFilter = ref<number>()
-const activeOnly = ref(true)
 
 // 分頁
 const currentPage = ref(1)
@@ -189,39 +182,29 @@ const handleSearch = () => {
   fetchProducts()
 }
 
-// 獲取產品列表
+// 獲取產品列表（只顯示啟用的）
 const fetchProducts = async () => {
   try {
     loading.value = true
     const params: any = {
       page: currentPage.value,
-      limit: pageSize.value
+      limit: pageSize.value,
+      isActive: true,
     }
 
     if (searchKeyword.value) {
-      params.search = searchKeyword.value
+      params.keyword = searchKeyword.value
     }
 
     if (categoryFilter.value) {
       params.categoryId = categoryFilter.value
     }
 
-    // 僅當啟用篩選時才傳遞 isActive 參數
-    if (activeOnly.value) {
-      params.isActive = true
-    }
-
-    console.log('API 請求參數:', params)
-
     const response = await productsApi.getProducts(params)
-
-    console.log('產品列表 API 回應:', response)
-
     products.value = response.data.items || []
     total.value = response.data.total || 0
   } catch (error) {
-    console.error('獲取產品列表失敗:', error)
-    ElMessage.error('獲取產品列表失敗')
+    // 錯誤訊息已由 request.ts 攔截器處理
     products.value = []
     total.value = 0
   } finally {

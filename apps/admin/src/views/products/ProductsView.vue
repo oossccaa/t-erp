@@ -22,15 +22,13 @@
             v-model="searchForm.keyword"
             placeholder="輸入產品名稱或 SKU"
             clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        
+
         <el-form-item label="產品分類">
           <el-select
             v-model="searchForm.categoryId"
@@ -46,7 +44,7 @@
             />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="狀態">
           <el-select
             v-model="searchForm.isActive"
@@ -58,12 +56,8 @@
             <el-option label="停用" :value="false" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜尋
-          </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
             重設
@@ -133,12 +127,17 @@
         </el-table-column>
         <el-table-column prop="unitPrice" label="單價" width="100" sortable="custom">
           <template #default="{ row }">
-            <span class="price">{{ formatMoney(row.unitPrice) }}</span>
+            <span class="price price-sale">{{ formatMoney(row.unitPrice) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="costPrice" label="成本價" width="100" sortable="custom">
           <template #default="{ row }">
-            <span class="price">{{ formatMoney(row.costPrice) }}</span>
+            <span class="price price-cost">{{ formatMoney(row.costPrice) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="毛利率" width="90" align="right">
+          <template #default="{ row }">
+            <span :class="getMarginClass(row)">{{ formatMargin(row) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="stockQuantity" label="庫存" width="80" sortable="custom">
@@ -169,7 +168,7 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button-group>
+            <div class="action-buttons">
               <el-button size="small" @click="handleEdit(row)">
                 <el-icon><Edit /></el-icon>
               </el-button>
@@ -179,7 +178,7 @@
               <el-button size="small" type="danger" @click="handleDelete(row)">
                 <el-icon><Delete /></el-icon>
               </el-button>
-            </el-button-group>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -209,7 +208,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { watchDebounced } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus,
@@ -220,7 +220,6 @@ import {
   Delete,
   Download,
   Upload,
-  View,
   Edit,
   CopyDocument,
 } from '@element-plus/icons-vue'
@@ -229,6 +228,26 @@ import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
 import ProductDialog from '@/components/products/ProductDialog.vue'
 import { formatMoney, formatDateTime } from '@/utils/format'
+
+const getMargin = (row: Product): number | null => {
+  const price = Number(row.unitPrice) || 0
+  const cost = Number(row.costPrice) || 0
+  if (price <= 0) return null
+  return ((price - cost) / price) * 100
+}
+
+const formatMargin = (row: Product): string => {
+  const m = getMargin(row)
+  return m === null ? '-' : `${m.toFixed(1)}%`
+}
+
+const getMarginClass = (row: Product): string => {
+  const m = getMargin(row)
+  if (m === null) return ''
+  if (m < 0) return 'margin-loss'
+  if (m < 15) return 'margin-low'
+  return 'margin-ok'
+}
 
 // 響應式資料
 const loading = ref(false)
@@ -294,11 +313,17 @@ const getCategoriesList = async () => {
   }
 }
 
-// 搜尋處理
-const handleSearch = () => {
+// 搜尋處理（即時）
+const triggerSearch = () => {
   pagination.page = 1
   getProductsList()
 }
+
+// keyword 輸入 debounce 300ms
+watchDebounced(() => searchForm.keyword, triggerSearch, { debounce: 300 })
+
+// 分類、狀態變動立即觸發
+watch(() => [searchForm.categoryId, searchForm.isActive], triggerSearch)
 
 // 重設處理
 const handleReset = () => {
@@ -483,7 +508,7 @@ const handleDialogConfirm = async (formData: any) => {
     dialogVisible.value = false
     getProductsList()
   } catch (error: any) {
-    ElMessage.error(error.message || (dialogMode.value === 'create' ? '建立失敗' : '更新失敗'))
+    // 錯誤訊息已由 request.ts 攔截器處理
     throw error // 讓 dialog 知道失敗，不要關閉
   }
 }
@@ -565,7 +590,29 @@ onMounted(async () => {
 
 .price {
   font-weight: 600;
+}
+
+.price-sale {
   color: var(--el-color-primary);
+}
+
+.price-cost {
+  color: var(--el-color-danger);
+}
+
+.margin-ok {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.margin-low {
+  font-weight: 600;
+  color: var(--el-color-warning);
+}
+
+.margin-loss {
+  font-weight: 600;
+  color: var(--el-color-danger);
 }
 
 .stock-warning {
@@ -644,6 +691,16 @@ onMounted(async () => {
         display: none;
       }
     }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 </style>

@@ -103,6 +103,10 @@
 
       <el-divider content-position="left">訂單項目</el-divider>
 
+      <div v-if="!isView" class="items-toolbar">
+        <el-checkbox v-model="showDiscount">顯示折扣欄</el-checkbox>
+      </div>
+
       <el-table :data="form.items" border style="width: 100%; margin-bottom: 16px;">
         <el-table-column prop="productId" label="產品" min-width="200">
           <template #default="{ row, $index }">
@@ -145,7 +149,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="discountRate" label="折扣 (%)" width="130">
+        <el-table-column v-if="showDiscount || isView" prop="discountRate" label="折扣 (%)" width="180">
           <template #default="{ row }">
             <el-input-number
               v-model="row.discountRate"
@@ -153,6 +157,7 @@
               :max="100"
               :precision="2"
               :disabled="isView"
+              controls-position="right"
               style="width: 100%"
               @change="calculateItemAmount(row)"
             />
@@ -187,7 +192,7 @@
         </el-table-column>
       </el-table>
 
-      <el-button v-if="!isView" @click="addItem" style="width: 100%; margin-bottom: 16px;">
+      <el-button v-if="!isView" @click="addItem" class="add-item-btn">
         <el-icon><Plus /></el-icon>
         新增項目
       </el-button>
@@ -406,6 +411,9 @@ const visible = computed({
 const isEdit = computed(() => props.mode === 'edit')
 const isView = computed(() => props.mode === 'view')
 
+// 折扣欄預設隱藏，需要時勾選顯示
+const showDiscount = ref(false)
+
 const form = reactive<SaleOrderForm>({
   customerId: undefined,
   orderDate: new Date().toISOString().split('T')[0],
@@ -458,10 +466,10 @@ const totalAmount = computed(() => {
   return subtotal.value - discountAmount.value + taxAmount.value + (form.shippingCost || 0)
 })
 
-// 格式化金額
+// 格式化金額（含千分位）
 const formatCurrency = (amount: number | string | undefined) => {
   const numAmount = Number(amount) || 0
-  return `NT$ ${numAmount.toFixed(2)}`
+  return `NT$ ${numAmount.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 // 計算項目金額
@@ -546,6 +554,7 @@ const resetForm = () => {
     referenceNumber: '',
     items: []
   })
+  showDiscount.value = false
   formRef.value?.clearValidate()
 }
 
@@ -683,6 +692,10 @@ watch(
           }
         })
       })
+      // 既有訂單若有任何品項用過折扣，自動展開折扣欄
+      showDiscount.value = (newOrder.items || []).some(
+        (it: any) => Number(it.discountRate) > 0 || Number(it.discountAmount) > 0
+      )
     }
   },
   { immediate: true }
@@ -749,6 +762,26 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.items-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.add-item-btn {
+  width: 100%;
+  margin-bottom: 16px;
+  background-color: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
+
+  &:hover {
+    background-color: var(--el-color-primary-light-8);
+    border-color: var(--el-color-primary-light-5);
+    color: var(--el-color-primary);
+  }
 }
 
 .amount-summary {

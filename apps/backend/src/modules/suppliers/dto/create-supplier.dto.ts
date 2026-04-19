@@ -29,4 +29,10 @@ export class CreateSupplierDto {
   @IsString({ message: '地址必須是字符串' })
   @IsOptional()
   address?: string
+
+  @ApiProperty({ description: '統一編號', example: '12345678', required: false })
+  @IsString({ message: '統一編號必須是字符串' })
+  @MaxLength(20, { message: '統一編號長度不能超過20字符' })
+  @IsOptional()
+  taxId?: string
 }

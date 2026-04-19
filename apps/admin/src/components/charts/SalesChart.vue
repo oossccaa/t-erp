@@ -29,6 +29,9 @@ import VChart from 'vue-echarts'
 import { saleOrdersApi } from '@/api/sale-orders'
 import dayjs from 'dayjs'
 import { Loading } from '@element-plus/icons-vue'
+import { useChartTheme } from '@/composables/useChartTheme'
+
+const { textColor } = useChartTheme()
 
 // 註冊 ECharts 組件
 use([
@@ -125,6 +128,8 @@ const loadChartData = async () => {
  * ECharts 雙Y軸配置
  */
 const option = computed(() => ({
+  textStyle: { color: textColor.value },
+  legend: { data: ['銷售額', '訂單數'], top: 0, textStyle: { color: textColor.value } },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -136,21 +141,20 @@ const option = computed(() => ({
     formatter: (params: any) => {
       if (!params || params.length === 0) return ''
 
-      const date = params[0].axisValue
+      const raw = params[0].axisValue
+      const d = dayjs(raw)
+      const date = d.isValid() ? d.format('YYYY-MM-DD') : raw
       let result = `${date}<br/>`
 
       params.forEach((param: any) => {
         const value = param.value
-        const unit = param.seriesName === '銷售額' ? ' 元' : ' 筆'
-        result += `${param.marker}${param.seriesName}: ${value.toLocaleString()}${unit}<br/>`
+        const prefix = param.seriesName === '銷售額' ? 'NT$ ' : ''
+        const suffix = param.seriesName === '銷售額' ? '' : ' 筆'
+        result += `${param.marker}${param.seriesName}: ${prefix}${Number(value).toLocaleString()}${suffix}<br/>`
       })
 
       return result
     }
-  },
-  legend: {
-    data: ['銷售額', '訂單數'],
-    top: 0
   },
   grid: {
     left: '3%',
@@ -163,13 +167,19 @@ const option = computed(() => ({
     type: 'category',
     data: chartData.value.dates,
     axisPointer: {
-      type: 'shadow'
+      type: 'shadow',
+      label: {
+        formatter: (p: any) => {
+          const d = dayjs(p.value)
+          return d.isValid() ? d.format('YYYY-MM-DD') : p.value
+        }
+      }
     },
     axisLabel: {
       rotate: chartData.value.dates.length > 30 ? 45 : 0,
       formatter: (value: string) => {
-        // 格式化日期顯示，只顯示月-日
-        return dayjs(value).format('MM-DD')
+        const d = dayjs(value)
+        return d.isValid() ? d.format('MM-DD') : value
       }
     }
   },

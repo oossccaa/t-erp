@@ -143,7 +143,11 @@
         </el-table-column>
       </el-table>
 
-      <el-button v-if="!isView" @click="addItem" style="width: 100%; margin-bottom: 16px;">
+      <el-button
+        v-if="!isView"
+        @click="addItem"
+        class="add-item-btn"
+      >
         <el-icon><Plus /></el-icon>
         新增項目
       </el-button>
@@ -397,10 +401,10 @@ const totalAmount = computed(() => {
   return subtotal.value - discountAmount.value + taxAmount.value + (form.shippingCost || 0)
 })
 
-// 格式化金額
+// 格式化金額（含千分位）
 const formatCurrency = (amount: number | undefined) => {
   const value = Number(amount) || 0
-  return `NT$ ${value.toFixed(2)}`
+  return `NT$ ${value.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 // 計算項目金額
@@ -643,6 +647,20 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.add-item-btn {
+  width: 100%;
+  margin-bottom: 16px;
+  background-color: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
+
+  &:hover {
+    background-color: var(--el-color-primary-light-8);
+    border-color: var(--el-color-primary-light-5);
+    color: var(--el-color-primary);
+  }
 }
 
 .amount-summary {

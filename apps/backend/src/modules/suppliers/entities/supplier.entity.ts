@@ -24,6 +24,10 @@ export class Supplier extends BaseEntity {
   @Column({ type: 'text', nullable: true, comment: '地址' })
   address?: string
 
+  @ApiProperty({ description: '統一編號', required: false })
+  @Column({ name: 'tax_id', length: 20, nullable: true, comment: '統一編號' })
+  taxId?: string
+
   @ApiProperty({ description: '是否啟用', default: true })
   @Column({ name: 'is_active', default: true, comment: '是否啟用' })
   isActive: boolean

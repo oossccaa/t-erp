@@ -28,6 +28,10 @@
         <el-input v-model="form.email" type="email" placeholder="請輸入電子郵箱" />
       </el-form-item>
 
+      <el-form-item label="統一編號" prop="taxId">
+        <el-input v-model="form.taxId" placeholder="請輸入統一編號（選填）" maxlength="20" />
+      </el-form-item>
+
       <el-form-item label="地址">
         <el-input
           v-model="form.address"
@@ -59,6 +63,7 @@ interface SupplierForm {
   contactPerson?: string
   phone?: string
   email?: string
+  taxId?: string
   address?: string
 }
 
@@ -94,6 +99,7 @@ const form = reactive<SupplierForm>({
   contactPerson: '',
   phone: '',
   email: '',
+  taxId: '',
   address: ''
 })
 
@@ -125,7 +131,10 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
 
-    emit('confirm', { ...form })
+    // 空字串欄位轉 undefined（避免後端 @IsEmail 等 optional 驗證誤觸）
+    const payload: any = { ...form }
+    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = undefined })
+    emit('confirm', payload)
   } catch (error) {
     console.error('提交失敗:', error)
   } finally {
@@ -151,6 +160,7 @@ watch(
         contactPerson: newSupplier.contactPerson || '',
         phone: newSupplier.phone || '',
         email: newSupplier.email || '',
+        taxId: newSupplier.taxId || '',
         address: newSupplier.address || ''
       })
     }
@@ -166,6 +176,7 @@ watch(visible, (newVisible) => {
       contactPerson: props.supplier.contactPerson || '',
       phone: props.supplier.phone || '',
       email: props.supplier.email || '',
+      taxId: props.supplier.taxId || '',
       address: props.supplier.address || ''
     })
   } else if (!newVisible) {

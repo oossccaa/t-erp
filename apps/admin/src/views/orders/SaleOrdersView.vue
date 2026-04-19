@@ -91,14 +91,14 @@
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="totalAmount" label="總金額" width="120" align="right">
+        <el-table-column prop="totalAmount" label="總金額" width="140" align="right">
           <template #default="{ row }">
-            NT$ {{ row.totalAmount?.toLocaleString() || '0' }}
+            <span class="amount-cell">NT$ {{ Number(row.totalAmount || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button-group>
+            <div class="action-buttons">
               <el-button size="small" @click="handleView(row)">
                 <el-icon><View /></el-icon>
                 檢視
@@ -156,7 +156,7 @@
                 <el-icon><Close /></el-icon>
                 取消
               </el-button>
-            </el-button-group>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -437,7 +437,6 @@ const handleCancelConfirm = async (data: CancelOrderParams) => {
     cancelDialogVisible.value = false
     loadData()
   } catch (error: any) {
-    ElMessage.error(error.message || '取消失敗')
     throw error
   }
 }
@@ -450,7 +449,6 @@ const handleRevertConfirm = async (data: RevertOrderParams) => {
     revertDialogVisible.value = false
     loadData()
   } catch (error: any) {
-    ElMessage.error(error.message || '退回失敗')
     throw error
   }
 }
@@ -496,7 +494,6 @@ const handleDialogConfirm = async (formData: any) => {
     dialogVisible.value = false
     loadData()
   } catch (error: any) {
-    ElMessage.error(error.message || (dialogMode.value === 'create' ? '建立失敗' : '更新失敗'))
     throw error // 讓 dialog 知道失敗，不要關閉
   }
 }
@@ -586,6 +583,20 @@ onMounted(() => {
         margin-left: 0 !important;
       }
     }
+  }
+}
+
+.amount-cell {
+  white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 </style>

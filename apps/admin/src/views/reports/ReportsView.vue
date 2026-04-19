@@ -128,7 +128,7 @@ const handleProductReport = () => {
 }
 
 .report-icon {
-  color: #409eff;
+  color: #3d8b7f;
   margin-bottom: 15px;
 }
 

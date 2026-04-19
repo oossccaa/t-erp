@@ -7,12 +7,18 @@
         <p class="page-description">監控庫存狀態、查看異動記錄</p>
       </div>
       <div class="header-actions">
+        <el-button type="primary" @click="stocktakeVisible = true">
+          <el-icon><Finished /></el-icon>
+          庫存盤點
+        </el-button>
         <el-button @click="handleExport">
           <el-icon><Download /></el-icon>
           匯出報表
         </el-button>
       </div>
     </div>
+
+    <StocktakeDialog v-model="stocktakeVisible" @done="handleStocktakeDone" />
 
     <!-- 統計卡片 -->
     <el-row :gutter="16" class="stats-cards">
@@ -62,7 +68,7 @@
               <el-icon><Coin /></el-icon>
             </div>
             <div class="stats-info">
-              <div class="stats-value">NT$ {{ formatNumber(stats.totalValue) }}</div>
+              <div class="stats-value">{{ formatNumber(stats.totalValue) }}</div>
               <div class="stats-label">總庫存值</div>
             </div>
           </div>
@@ -129,8 +135,10 @@
       >
         <el-table-column prop="name" label="商品名稱" min-width="180" />
         <el-table-column prop="sku" label="SKU" width="140" />
-        <el-table-column prop="categoryName" label="分類" width="120" />
-        <el-table-column prop="stockQuantity" label="目前庫存" width="120" align="right">
+        <el-table-column label="分類" width="120">
+          <template #default="{ row }">{{ row.category?.name || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="stockQuantity" label="目前庫存" width="90" align="right">
           <template #default="{ row }">
             <span :class="getStockClass(row)">
               <el-icon v-if="row.stockQuantity === 0"><CircleClose /></el-icon>
@@ -139,13 +147,13 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="minStockLevel" label="最低庫存" width="120" align="right" />
-        <el-table-column prop="unitPrice" label="售價" width="120" align="right">
+        <el-table-column prop="minStockLevel" label="最低庫存" width="90" align="right" />
+        <el-table-column prop="unitPrice" label="售價" min-width="160" align="right">
           <template #default="{ row }">
             NT$ {{ row.unitPrice?.toLocaleString() || '0' }}
           </template>
         </el-table-column>
-        <el-table-column label="庫存總值" width="140" align="right">
+        <el-table-column label="庫存總值" min-width="180" align="right">
           <template #default="{ row }">
             NT$ {{ ((row.stockQuantity || 0) * (row.costPrice || 0)).toLocaleString() }}
           </template>
@@ -236,14 +244,23 @@ import {
   Search,
   Refresh,
   Document,
+  Finished,
 } from '@element-plus/icons-vue'
+import StocktakeDialog from '@/components/inventory/StocktakeDialog.vue'
 import { productsApi } from '@/api/products'
 import { inventoryApi, InventoryTransactionType } from '@/api/inventory'
 import { categoriesApi } from '@/api/categories'
 import type { Product, Category } from '@/types'
 
 const loading = ref(false)
+const stocktakeVisible = ref(false)
 const tableData = ref<Product[]>([])
+
+// 盤點完成後刷新
+const handleStocktakeDone = () => {
+  loadStats()
+  loadData()
+}
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)

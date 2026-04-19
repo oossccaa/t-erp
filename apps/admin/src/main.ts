@@ -5,7 +5,9 @@ import { createPinia } from 'pinia'
 import i18n from './i18n'
 import { useAuthStore } from './stores/auth'
 
-// Element Plus 樣式
+// Element Plus 樣式與繁中語系
+import ElementPlus from 'element-plus'
+import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 
@@ -19,6 +21,7 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+app.use(ElementPlus, { locale: zhTw })
 
 // 在應用掛載前，恢復認證狀態
 const authStore = useAuthStore()

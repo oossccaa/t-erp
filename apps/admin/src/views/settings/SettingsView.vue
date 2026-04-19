@@ -232,10 +232,10 @@ onMounted(() => {
 }
 
 .settings-tabs {
-  background: white;
+  background: var(--el-bg-color);
   padding: 20px;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .user-management,
@@ -245,7 +245,7 @@ onMounted(() => {
 }
 
 .filters {
-  background: #f5f5f5;
+  background: var(--el-fill-color-light);
   padding: 16px;
   border-radius: 4px;
   margin-bottom: 20px;

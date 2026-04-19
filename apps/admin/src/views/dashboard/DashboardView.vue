@@ -25,13 +25,6 @@
               <div class="stat-label">{{ stat.label }}</div>
             </div>
           </div>
-          <div class="stat-trend">
-            <el-icon :class="stat.trend > 0 ? 'trend-up' : 'trend-down'">
-              <ArrowUp v-if="stat.trend > 0" />
-              <ArrowDown v-else />
-            </el-icon>
-            <span class="trend-text">{{ Math.abs(stat.trend) }}%</span>
-          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -168,8 +161,6 @@ import {
   User,
   ShoppingCart,
   Wallet,
-  ArrowUp,
-  ArrowDown,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import SalesChart from '@/components/charts/SalesChart.vue'
@@ -270,9 +261,9 @@ const getOrderStatusText = (status: string) => {
   return statusMap[status] || status
 }
 
-// 檢視訂單詳情
-const viewOrderDetail = (order: any) => {
-  router.push(`/sale-orders/${order.id}`)
+// 檢視訂單詳情（暫無詳情頁路由，導去列表頁）
+const viewOrderDetail = (_order: any) => {
+  router.push('/sale-orders')
 }
 
 // 組件標題
@@ -466,25 +457,6 @@ onMounted(() => {
   }
 }
 
-.stat-trend {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  
-  .trend-up {
-    color: var(--el-color-success);
-  }
-  
-  .trend-down {
-    color: var(--el-color-danger);
-  }
-  
-  .trend-text {
-    margin-left: 4px;
-    font-weight: 500;
-  }
-}
-
 // 圖表區域
 .charts-section {
   margin-bottom: 24px;
@@ -530,15 +502,16 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
+    padding: 12px;
+    border-radius: 6px;
     border-bottom: 1px solid var(--el-border-color-lighter);
     cursor: pointer;
     transition: background-color 0.2s;
-    
+
     &:hover {
-      background-color: var(--el-fill-color-lighter);
+      background-color: var(--el-color-primary-light-9);
     }
-    
+
     &:last-child {
       border-bottom: none;
     }

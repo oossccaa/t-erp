@@ -137,7 +137,7 @@
                   {{ product.stockQuantity }} 件
                 </div>
                 <div v-else class="value-primary">
-                  ¥{{ product.stockValue.toLocaleString() }}
+                  NT$ {{ product.stockValue.toLocaleString() }}
                 </div>
               </div>
             </div>
@@ -204,6 +204,9 @@ import {
   CircleClose,
   Loading
 } from '@element-plus/icons-vue'
+import { useChartTheme } from '@/composables/useChartTheme'
+
+const { textColor } = useChartTheme()
 
 // 註冊 ECharts 組件
 use([
@@ -298,6 +301,7 @@ const topProducts = ref<Array<{
 
 // 庫存趨勢圖表配置
 const trendChartOption = computed(() => ({
+  textStyle: { color: textColor.value },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -305,7 +309,9 @@ const trendChartOption = computed(() => ({
     },
     formatter: (params: any) => {
       if (!params || params.length === 0) return ''
-      const date = params[0].axisValue
+      const raw = params[0].axisValue
+      const d = dayjs(raw)
+      const date = d.isValid() ? d.format('YYYY-MM-DD') : raw
       let result = `${date}<br/>`
       params.forEach((param: any) => {
         result += `${param.marker}${param.seriesName}: ${param.value} 件<br/>`
@@ -315,7 +321,8 @@ const trendChartOption = computed(() => ({
   },
   legend: {
     data: ['入庫', '出庫', '淨變化'],
-    top: 0
+    top: 0,
+    textStyle: { color: textColor.value }
   },
   grid: {
     left: '3%',
@@ -327,9 +334,17 @@ const trendChartOption = computed(() => ({
   xAxis: {
     type: 'category',
     data: trendData.trend.map(item => item.date),
+    axisPointer: {
+      label: {
+        formatter: (p: any) => {
+          const d = dayjs(p.value)
+          return d.isValid() ? d.format('YYYY-MM-DD') : p.value
+        }
+      }
+    },
     axisLabel: {
       rotate: trendData.trend.length > 15 ? 45 : 0,
-      formatter: (value: string) => dayjs(value).format('MM-DD')
+      formatter: (value: string) => dayjs(value).isValid() ? dayjs(value).format('MM-DD') : value
     }
   },
   yAxis: {

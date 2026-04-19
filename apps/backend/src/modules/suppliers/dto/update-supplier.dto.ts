@@ -30,6 +30,12 @@ export class UpdateSupplierDto {
   @IsOptional()
   address?: string
 
+  @ApiProperty({ description: '統一編號', example: '12345678', required: false })
+  @IsString({ message: '統一編號必須是字符串' })
+  @MaxLength(20, { message: '統一編號長度不能超過20字符' })
+  @IsOptional()
+  taxId?: string
+
   @ApiProperty({ description: '是否啟用', example: true, required: false })
   @IsBoolean({ message: '啟用狀態必須是布爾值' })
   @IsOptional()

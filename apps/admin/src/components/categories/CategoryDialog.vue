@@ -147,7 +147,9 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
 
-    emit('confirm', { ...form })
+    const payload: any = { ...form }
+    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = undefined })
+    emit('confirm', payload)
   } catch (error) {
     console.error('提交失敗:', error)
   } finally {

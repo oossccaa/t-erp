@@ -194,4 +194,8 @@ export const inventoryApi = {
   // 獲取商品排行榜
   getTopProducts: (query?: TopProductsQuery) =>
     request.get<ApiResponse<TopProductsResponse>>('/inventory/report/top-products', query),
+
+  // 庫存盤點：批次調整實盤數
+  stocktake: (items: Array<{ productId: number; actualQty: number; notes?: string }>) =>
+    request.post<ApiResponse<{ adjusted: number; skipped: number }>>('/inventory/stocktake', { items }),
 }

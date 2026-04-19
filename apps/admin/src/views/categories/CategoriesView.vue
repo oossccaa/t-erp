@@ -17,6 +17,7 @@
     <!-- 分類列表 -->
     <el-card class="table-card" shadow="never">
       <el-table
+        ref="tableRef"
         v-loading="loading"
         :data="tableData"
         row-key="id"
@@ -42,7 +43,7 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button-group>
+            <div class="action-buttons">
               <el-button size="small" @click="handleEdit(row)">
                 <el-icon><Edit /></el-icon>
                 編輯
@@ -51,7 +52,7 @@
                 <el-icon><Delete /></el-icon>
                 刪除
               </el-button>
-            </el-button-group>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -68,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import type { Category } from '@/types'
@@ -81,6 +82,27 @@ const loading = ref(false)
 const tableData = ref<Category[]>([])
 const dialogVisible = ref(false)
 const currentCategory = ref<Category | null>(null)
+const tableRef = ref<any>(null)
+
+// 找到目標節點的所有祖先（從頂層到直接父層）
+const findAncestors = (nodes: Category[], targetId: number, trail: Category[] = []): Category[] | null => {
+  for (const node of nodes) {
+    if (node.id === targetId) return trail
+    if (node.children?.length) {
+      const found = findAncestors(node.children, targetId, [...trail, node])
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// 展開指定節點的所有祖先
+const expandAncestors = async (nodeId: number) => {
+  await nextTick()
+  const ancestors = findAncestors(tableData.value, nodeId)
+  if (!ancestors) return
+  ancestors.forEach(row => tableRef.value?.toggleRowExpansion(row, true))
+}
 
 // 扁平化的分類列表（用於父分類選擇）
 const flatCategories = computed(() => {
@@ -154,20 +176,25 @@ const handleDelete = async (row: Category) => {
 // 對話框確認
 const handleDialogConfirm = async (formData: any) => {
   try {
+    let newId: number | undefined
     if (currentCategory.value?.id) {
-      // 更新分類
       await categoriesApi.updateCategory(currentCategory.value.id, formData)
       ElMessage.success('更新成功')
     } else {
-      // 建立分類
-      await categoriesApi.createCategory(formData)
+      const res = await categoriesApi.createCategory(formData)
+      newId = (res as any)?.data?.id
       ElMessage.success('建立成功')
     }
 
     dialogVisible.value = false
-    getCategoriesTree()
+    await getCategoriesTree()
+
+    // 新增後若有父分類，自動展開所有祖先讓新項目可見
+    if (newId && formData.parentId) {
+      expandAncestors(newId)
+    }
   } catch (error: any) {
-    ElMessage.error(error.message || (currentCategory.value?.id ? '更新失敗' : '創建失敗'))
+    // 錯誤訊息已由 request.ts 攔截器處理
     throw error // 讓 dialog 知道失敗，不要關閉
   }
 }
@@ -239,6 +266,16 @@ onMounted(() => {
     .header-actions {
       align-self: flex-end;
     }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 </style>

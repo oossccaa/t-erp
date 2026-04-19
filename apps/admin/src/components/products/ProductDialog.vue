@@ -233,8 +233,11 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
 
+    // 空字串欄位轉 undefined（避免後端 optional 驗證誤觸）
+    const payload: any = { ...form }
+    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = undefined })
     // 發出 confirm 事件，等待父元件處理 API
-    await emit('confirm', { ...form })
+    await emit('confirm', payload)
 
     // API 成功後，父元件會關閉對話框
   } catch (error) {

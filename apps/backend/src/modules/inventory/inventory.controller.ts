@@ -16,6 +16,21 @@ import { InventoryAdjustmentStatus } from './entities/inventory-adjustment.entit
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
+  @Post('stocktake')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: '庫存盤點：批次調整實盤數' })
+  async stocktake(
+    @Body() body: { items: Array<{ productId: number; actualQty: number; notes?: string }> },
+    @Request() req: any,
+  ) {
+    const result = await this.inventoryService.stocktake(body.items || [], req.user.id)
+    return {
+      success: true,
+      data: result,
+      message: `盤點完成，調整 ${result.adjusted} 筆，無差異 ${result.skipped} 筆`,
+    }
+  }
+
   @Get('stats')
   @ApiOperation({ summary: '獲取庫存統計' })
   @ApiResponse({ status: 200, description: '獲取成功' })
