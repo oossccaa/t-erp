@@ -233,21 +233,29 @@ async function seed() {
     }
     console.log(`📦 ${products.length} 個產品建立`)
 
+    // 生成假統編（8 碼，deterministic 不重複，不保證合法但格式正確）
+    const genTaxId = (i: number) => String(22100000 + i * 37).padStart(8, '0').slice(-8)
+
     const supplierIds: number[] = []
-    for (const s of SUPPLIERS) {
+    for (let i = 0; i < SUPPLIERS.length; i++) {
+      const s = SUPPLIERS[i]
       const r = await client.query(
-        `INSERT INTO suppliers (name, contact_person, phone, email, address, is_active) VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
-        [s.name, s.person, s.phone, s.email, s.addr],
+        `INSERT INTO suppliers (name, contact_person, phone, email, tax_id, address, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING id`,
+        [s.name, s.person, s.phone, s.email, genTaxId(i), s.addr],
       )
       supplierIds.push(r.rows[0].id)
     }
     console.log(`🏭 ${SUPPLIERS.length} 個供應商建立`)
 
     const customerIds: number[] = []
-    for (const c of CUSTOMERS) {
+    for (let i = 0; i < CUSTOMERS.length; i++) {
+      const c = CUSTOMERS[i]
+      const email = `customer${i + 1}@demo-offroad.tw`
       const r = await client.query(
-        `INSERT INTO customers (name, contact_person, phone, is_active) VALUES ($1, $2, $3, true) RETURNING id`,
-        [c.name, c.person, c.phone],
+        `INSERT INTO customers (name, contact_person, phone, email, tax_id, is_active)
+         VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+        [c.name, c.person, c.phone, email, genTaxId(i + SUPPLIERS.length)],
       )
       customerIds.push(r.rows[0].id)
     }

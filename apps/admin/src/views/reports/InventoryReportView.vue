@@ -9,62 +9,27 @@
     </div>
 
     <!-- 統計摘要卡片 -->
-    <el-row :gutter="20" class="summary-cards">
-      <el-col :xs="24" :sm="12" :md="4">
-        <el-card shadow="hover" class="stat-card">
-          <el-statistic title="商品總數" :value="summaryData.totalProducts">
-            <template #prefix>
-              <el-icon style="color: #409EFF"><Box /></el-icon>
-            </template>
-            <template #suffix>種</template>
-          </el-statistic>
-        </el-card>
+    <el-row :gutter="16" class="summary-cards">
+      <el-col :xs="12" :sm="12" :md="5">
+        <StatCard :icon="Box" tone="primary" label="商品總數" :value="summaryData.totalProducts" />
       </el-col>
-      <el-col :xs="24" :sm="12" :md="5">
-        <el-card shadow="hover" class="stat-card">
-          <el-statistic title="總庫存數量" :value="summaryData.totalStockQuantity">
-            <template #prefix>
-              <el-icon style="color: #67C23A"><Grid /></el-icon>
-            </template>
-            <template #suffix>件</template>
-          </el-statistic>
-        </el-card>
+      <el-col :xs="12" :sm="12" :md="5">
+        <StatCard :icon="Grid" tone="success" label="總庫存數量" :value="summaryData.totalStockQuantity" />
       </el-col>
-      <el-col :xs="24" :sm="12" :md="5">
-        <el-card shadow="hover" class="stat-card">
-          <el-statistic title="總庫存價值" :value="summaryData.totalStockValue" :precision="2">
-            <template #prefix>
-              <el-icon style="color: #E6A23C"><Money /></el-icon>
-            </template>
-            <template #suffix>元</template>
-          </el-statistic>
-        </el-card>
+      <el-col :xs="12" :sm="12" :md="5">
+        <StatCard :icon="Money" tone="warning" label="總庫存價值" :value="formatMoneyShort(summaryData.totalStockValue)" />
       </el-col>
-      <el-col :xs="24" :sm="12" :md="5">
-        <el-card shadow="hover" class="stat-card stat-warning">
-          <el-statistic title="低庫存商品" :value="summaryData.lowStockCount">
-            <template #prefix>
-              <el-icon style="color: #E6A23C"><Warning /></el-icon>
-            </template>
-            <template #suffix>種</template>
-          </el-statistic>
-        </el-card>
+      <el-col :xs="12" :sm="12" :md="4">
+        <StatCard :icon="Warning" tone="warning" label="低庫存商品" :value="summaryData.lowStockCount" />
       </el-col>
-      <el-col :xs="24" :sm="12" :md="5">
-        <el-card shadow="hover" class="stat-card stat-danger">
-          <el-statistic title="零庫存商品" :value="summaryData.outOfStockCount">
-            <template #prefix>
-              <el-icon style="color: #F56C6C"><CircleClose /></el-icon>
-            </template>
-            <template #suffix>種</template>
-          </el-statistic>
-        </el-card>
+      <el-col :xs="12" :sm="12" :md="5">
+        <StatCard :icon="CircleClose" tone="danger" label="零庫存商品" :value="summaryData.outOfStockCount" />
       </el-col>
     </el-row>
 
     <!-- 庫存趨勢篩選 -->
     <el-card shadow="never" class="filter-card">
-      <el-form :inline="true" :model="filterForm">
+      <el-form :inline="true" :model="filterForm" @submit.prevent>
         <el-form-item label="日期範圍">
           <el-date-picker
             v-model="filterForm.dateRange"
@@ -205,6 +170,8 @@ import {
   Loading
 } from '@element-plus/icons-vue'
 import { useChartTheme } from '@/composables/useChartTheme'
+import { formatMoneyShort } from '@/utils/format'
+import StatCard from '@/components/common/StatCard.vue'
 
 const { textColor } = useChartTheme()
 
@@ -522,10 +489,6 @@ onMounted(() => {
 
 .summary-cards {
   margin-bottom: 20px;
-}
-
-.stat-card {
-  text-align: center;
 }
 
 .chart-section {

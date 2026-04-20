@@ -89,10 +89,10 @@ export class PurchaseOrdersService {
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('items.product', 'product')
 
-    if (query.search) {
+    if (query.keyword) {
       queryBuilder.andWhere(
-        '(order.orderNumber LIKE :search OR supplier.name LIKE :search OR supplier.contactPerson LIKE :search)',
-        { search: `%${query.search}%` }
+        '(order.orderNumber LIKE :keyword OR supplier.name LIKE :keyword OR supplier.contactPerson LIKE :keyword)',
+        { keyword: `%${query.keyword}%` }
       )
     }
 

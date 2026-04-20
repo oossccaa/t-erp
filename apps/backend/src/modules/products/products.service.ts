@@ -66,9 +66,10 @@ export class ProductsService {
       )
     }
 
-    // 分類篩選
+    // 分類篩選（若為主分類，需一併包含所有子孫分類）
     if (categoryId) {
-      queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId })
+      const categoryIds = await this.getCategoryDescendantIds(categoryId)
+      queryBuilder.andWhere('product.categoryId IN (:...categoryIds)', { categoryIds })
     }
 
     // 啟用狀態篩選
@@ -124,10 +125,26 @@ export class ProductsService {
   }
 
   async findByCategory(categoryId: number): Promise<Product[]> {
-    return this.productsRepository.find({
-      where: { categoryId },
-      relations: ['category'],
-    })
+    const categoryIds = await this.getCategoryDescendantIds(categoryId)
+    return this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.categoryId IN (:...categoryIds)', { categoryIds })
+      .getMany()
+  }
+
+  private async getCategoryDescendantIds(rootId: number): Promise<number[]> {
+    const rows: Array<{ id: number }> = await this.productsRepository.query(
+      `WITH RECURSIVE category_tree AS (
+         SELECT id FROM categories WHERE id = $1
+         UNION ALL
+         SELECT c.id FROM categories c
+         INNER JOIN category_tree ct ON c.parent_id = ct.id
+       )
+       SELECT id FROM category_tree`,
+      [rootId],
+    )
+    return rows.length > 0 ? rows.map((r) => r.id) : [rootId]
   }
 
   async findLowStockProducts(): Promise<Product[]> {

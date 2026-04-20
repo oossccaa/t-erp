@@ -1883,5 +1883,16 @@ SELECT pg_catalog.setval('public.users_id_seq', 1, true);
 -- PostgreSQL database dump complete
 --
 
+-- 補上缺失的 email / tax_id（demo 用假資料）
+UPDATE public.customers
+SET email = COALESCE(email, 'customer' || id || '@demo-steel.tw'),
+    tax_id = COALESCE(tax_id, LPAD(((22100000 + id * 37) % 100000000)::text, 8, '0'))
+WHERE deleted_at IS NULL;
+
+UPDATE public.suppliers
+SET email = COALESCE(email, 'supplier' || id || '@demo-steel.tw'),
+    tax_id = COALESCE(tax_id, LPAD(((31200000 + id * 41) % 100000000)::text, 8, '0'))
+WHERE deleted_at IS NULL;
+
 \unrestrict HlyEcY8kyr8b3qIjvqwM75tqBsPslOTDdciqbnAhNP5UZn68uS2RsoAoLXdXCTc
 

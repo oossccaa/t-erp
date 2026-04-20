@@ -286,10 +286,18 @@ const userAvatar = computed(() => {
   return authStore.user?.avatar || ''
 })
 
-// KeepAlive 緩存名稱
+// KeepAlive 緩存名稱（需對應各頁面 defineOptions({ name }) 所設的名字）
 const keepAliveNames = computed(() => {
-  // 這裡可以根據業務需求動態設定需要緩存的組件
-  return ['Dashboard', 'Products', 'Orders']
+  return [
+    'Dashboard',
+    'Products',
+    'Categories',
+    'Inventory',
+    'Customers',
+    'Suppliers',
+    'PurchaseOrders',
+    'SaleOrders',
+  ]
 })
 
 // 用戶菜單處理

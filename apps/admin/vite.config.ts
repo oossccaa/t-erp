@@ -32,6 +32,7 @@ export default defineConfig({
 
 server: {
     port: 3001,
+    allowedHosts: ['.trycloudflare.com', 'localhost'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

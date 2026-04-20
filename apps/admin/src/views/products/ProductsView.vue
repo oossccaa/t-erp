@@ -16,7 +16,7 @@
     
     <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :model="searchForm" :inline="true" class="search-form">
+      <el-form :model="searchForm" :inline="true" class="search-form" @submit.prevent>
         <el-form-item label="產品名稱">
           <el-input
             v-model="searchForm.keyword"
@@ -94,10 +94,6 @@
             <el-button size="small" @click="handleExport">
               <el-icon><Download /></el-icon>
               匯出
-            </el-button>
-            <el-button size="small" @click="handleImport">
-              <el-icon><Upload /></el-icon>
-              匯入
             </el-button>
           </div>
         </div>
@@ -208,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onActivated, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -219,7 +215,6 @@ import {
   Close,
   Delete,
   Download,
-  Upload,
   Edit,
   CopyDocument,
 } from '@element-plus/icons-vue'
@@ -484,12 +479,6 @@ const handleExport = async () => {
   ElMessage.info('匯出功能開發中')
 }
 
-// 匯入資料
-const handleImport = () => {
-  // 這裡可以開啟匯入對話框
-  ElMessage.info('匯入功能開發中...')
-}
-
 // 對話框確認
 const handleDialogConfirm = async (formData: any) => {
   try {
@@ -524,6 +513,11 @@ onMounted(async () => {
     getProductsList(),
     getCategoriesList(),
   ])
+})
+
+// keep-alive 頁面再次啟用時，清空搜尋條件
+onActivated(() => {
+  handleReset()
 })
 </script>
 

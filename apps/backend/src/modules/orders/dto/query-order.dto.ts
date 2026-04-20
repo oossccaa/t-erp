@@ -18,7 +18,7 @@ export class QueryPurchaseOrderDto {
 
   @IsOptional()
   @IsString()
-  search?: string
+  keyword?: string
 
   @IsOptional()
   @IsString()
@@ -69,7 +69,7 @@ export class QuerySaleOrderDto {
 
   @IsOptional()
   @IsString()
-  search?: string
+  keyword?: string
 
   @IsOptional()
   @IsString()

@@ -49,6 +49,11 @@
 
       <el-row :gutter="16">
         <el-col :span="12">
+          <el-form-item label="統一編號">
+            <el-input :model-value="selectedSupplierTaxId" disabled placeholder="選擇供應商後自動帶入" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
           <el-form-item label="預計交貨日期">
             <el-date-picker
               v-model="form.expectedDeliveryDate"
@@ -60,6 +65,9 @@
             />
           </el-form-item>
         </el-col>
+      </el-row>
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="參考編號">
             <el-input
@@ -351,6 +359,11 @@ const visible = computed({
 
 const isEdit = computed(() => props.mode === 'edit')
 const isView = computed(() => props.mode === 'view')
+
+const selectedSupplierTaxId = computed(() => {
+  const s = suppliers.value.find((x) => x.id === form.supplierId)
+  return s?.taxId || '—'
+})
 
 const form = reactive<PurchaseOrderForm>({
   supplierId: undefined,

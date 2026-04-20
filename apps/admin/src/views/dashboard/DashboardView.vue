@@ -13,19 +13,12 @@
     <!-- 資料概覽卡片 -->
     <el-row :gutter="16" class="stats-cards">
       <el-col :xs="12" :sm="6" v-for="stat in statsData" :key="stat.key">
-        <el-card class="stat-card" :class="`stat-card--${stat.type}`" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <el-icon :size="32">
-                <component :is="stat.icon" />
-              </el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ stat.value }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard
+          :icon="stat.icon"
+          :label="stat.label"
+          :value="stat.value"
+          :tone="stat.type as any"
+        />
       </el-col>
     </el-row>
     
@@ -37,15 +30,15 @@
           <template #header>
             <div class="card-header">
               <span class="card-title">銷售趨勢</span>
-              <el-radio-group v-model="salesPeriod" size="small">
-                <el-radio-button value="7d">7天</el-radio-button>
-                <el-radio-button value="30d">30天</el-radio-button>
-                <el-radio-button value="90d">90天</el-radio-button>
+              <el-radio-group v-model="salesGranularity" size="small">
+                <el-radio-button value="day">日表</el-radio-button>
+                <el-radio-button value="week">週表</el-radio-button>
+                <el-radio-button value="month">月表</el-radio-button>
               </el-radio-group>
             </div>
           </template>
           <div class="chart-container">
-            <SalesChart :period="salesPeriod" />
+            <SalesChart :granularity="salesGranularity" />
           </div>
         </el-card>
       </el-col>
@@ -56,15 +49,15 @@
           <template #header>
             <div class="card-header">
               <span class="card-title">進貨趨勢</span>
-              <el-radio-group v-model="purchasePeriod" size="small">
-                <el-radio-button value="7d">7天</el-radio-button>
-                <el-radio-button value="30d">30天</el-radio-button>
-                <el-radio-button value="90d">90天</el-radio-button>
+              <el-radio-group v-model="purchaseGranularity" size="small">
+                <el-radio-button value="day">日表</el-radio-button>
+                <el-radio-button value="week">週表</el-radio-button>
+                <el-radio-button value="month">月表</el-radio-button>
               </el-radio-group>
             </div>
           </template>
           <div class="chart-container">
-            <PurchaseChart :period="purchasePeriod" />
+            <PurchaseChart :granularity="purchaseGranularity" />
           </div>
         </el-card>
       </el-col>
@@ -165,11 +158,13 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import SalesChart from '@/components/charts/SalesChart.vue'
 import PurchaseChart from '@/components/charts/PurchaseChart.vue'
+import StatCard from '@/components/common/StatCard.vue'
 import { saleOrdersApi } from '@/api/sale-orders'
 import { purchaseOrdersApi } from '@/api/purchase-orders'
 import { inventoryApi } from '@/api/inventory'
 import { customersApi } from '@/api/customers'
 import { productsApi } from '@/api/products'
+import { formatMoneyShort } from '@/utils/format'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -179,11 +174,11 @@ const currentDate = computed(() => {
   return dayjs().format('YYYY年MM月DD日 dddd')
 })
 
-// 銷售周期
-const salesPeriod = ref<'7d' | '30d' | '90d'>('30d')
+// 銷售圖粒度
+const salesGranularity = ref<'day' | 'week' | 'month'>('day')
 
-// 進貨周期
-const purchasePeriod = ref<'7d' | '30d' | '90d'>('30d')
+// 進貨圖粒度
+const purchaseGranularity = ref<'day' | 'week' | 'month'>('day')
 
 // 統計數據
 const statsData = ref([
@@ -313,14 +308,7 @@ const loadDashboardData = async () => {
       }
 
       if (revenueStat && summary?.totalAmount !== undefined) {
-        const revenue = summary.totalAmount
-        if (revenue >= 1000000) {
-          revenueStat.value = (revenue / 1000000).toFixed(1) + 'M'
-        } else if (revenue >= 1000) {
-          revenueStat.value = (revenue / 1000).toFixed(1) + 'K'
-        } else {
-          revenueStat.value = revenue.toFixed(0)
-        }
+        revenueStat.value = formatMoneyShort(summary.totalAmount)
       }
     }
 
@@ -339,7 +327,7 @@ const loadDashboardData = async () => {
       recentOrders.value = items.slice(0, 5).map((order: any) => ({
         id: order.id,
         orderNumber: order.orderNumber,
-        customer: order.customerName || '未知客戶',
+        customer: order.customer?.name || '未知客戶',
         totalAmount: order.totalAmount,
         status: order.status,
         createdAt: new Date(order.createdAt)
@@ -397,64 +385,6 @@ onMounted(() => {
 // 統計卡片
 .stats-cards {
   margin-bottom: 24px;
-}
-
-.stat-card {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
-  
-  :deep(.el-card__body) {
-    padding: 20px;
-  }
-  
-  &--primary {
-    border-left: 4px solid var(--el-color-primary);
-  }
-  
-  &--success {
-    border-left: 4px solid var(--el-color-success);
-  }
-  
-  &--info {
-    border-left: 4px solid var(--el-color-info);
-  }
-  
-  &--warning {
-    border-left: 4px solid var(--el-color-warning);
-  }
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  
-  .stat-icon {
-    margin-right: 16px;
-    color: var(--el-text-color-secondary);
-  }
-  
-  .stat-info {
-    flex: 1;
-    
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--el-text-color-primary);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    
-    .stat-label {
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-    }
-  }
 }
 
 // 圖表區域
@@ -605,12 +535,6 @@ onMounted(() => {
     
     .welcome-subtitle {
       font-size: 14px;
-    }
-  }
-  
-  .stat-content {
-    .stat-value {
-      font-size: 24px;
     }
   }
   

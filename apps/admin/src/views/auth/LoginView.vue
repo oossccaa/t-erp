@@ -9,7 +9,7 @@
           </el-icon>
         </div>
         <h1 class="title">T-ERP 管理後台</h1>
-        <p class="subtitle">小工廠進銷存管理系統</p>
+        <p class="subtitle">進銷存管理系統</p>
       </div>
       
       <!-- 登入表單 -->
@@ -20,6 +20,7 @@
         class="login-form"
         size="large"
         @keyup.enter="handleLogin"
+        @submit.prevent
       >
         <el-form-item prop="username">
           <el-input
@@ -63,21 +64,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-      
-      <!-- 快速登入 -->
-      <div class="quick-login">
-        <el-divider>測試用戶</el-divider>
-        <div class="demo-accounts">
-          <el-button 
-            v-for="account in demoAccounts" 
-            :key="account.username"
-            text 
-            @click="fillDemoAccount(account)"
-          >
-            {{ account.label }}
-          </el-button>
-        </div>
-      </div>
     </div>
     
     <!-- 背景裝飾 -->
@@ -94,7 +80,7 @@ import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import { Box, User, Lock } from '@element-plus/icons-vue'
+import { Box } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -125,13 +111,6 @@ const loginRules: FormRules = {
 // 狀態
 const loading = ref(false)
 const rememberMe = ref(false)
-
-// 測試用戶
-const demoAccounts = [
-  { username: 'admin', password: 'admin123', label: '管理員' },
-  { username: 'manager', password: 'manager123', label: '經理' },
-  { username: 'user', password: 'user123', label: '一般用戶' },
-]
 
 // 登入處理
 const handleLogin = async () => {
@@ -170,12 +149,6 @@ const handleLogin = async () => {
 // 忘記密碼
 const handleForgotPassword = () => {
   ElMessage.info('請聯繫管理員重設密碼')
-}
-
-// 填入測試用戶
-const fillDemoAccount = (account: typeof demoAccounts[0]) => {
-  loginForm.username = account.username
-  loginForm.password = account.password
 }
 
 // 初始化

@@ -380,7 +380,7 @@ export class InventoryService {
       .createQueryBuilder('product')
       .select('COUNT(*)', 'totalProducts')
       .addSelect('COALESCE(SUM(product.stockQuantity), 0)', 'totalStockQuantity')
-      .addSelect('COALESCE(SUM(product.stockQuantity * product.unitCost), 0)', 'totalStockValue')
+      .addSelect('COALESCE(SUM(product.stockQuantity * product.costPrice), 0)', 'totalStockValue')
       .addSelect('SUM(CASE WHEN product.stockQuantity <= product.minStockLevel AND product.stockQuantity > 0 THEN 1 ELSE 0 END)', 'lowStockCount')
       .addSelect('SUM(CASE WHEN product.stockQuantity = 0 THEN 1 ELSE 0 END)', 'outOfStockCount')
       .getRawOne()
@@ -453,12 +453,12 @@ export class InventoryService {
       .addSelect('product.name', 'productName')
       .addSelect('product.sku', 'productSku')
       .addSelect('product.stockQuantity', 'stockQuantity')
-      .addSelect('product.unitCost', 'unitCost')
-      .addSelect('product.stock_quantity * product.unit_cost', 'stockValue')
+      .addSelect('product.costPrice', 'unitCost')
+      .addSelect('product.stock_quantity * product.cost_price', 'stockValue')
 
     // 使用實際欄位名稱排序，避免使用別名導致某些資料庫錯誤
     if (sortBy === 'stockValue') {
-      queryBuilder.orderBy('product.stock_quantity * product.unit_cost', 'DESC')
+      queryBuilder.orderBy('product.stock_quantity * product.cost_price', 'DESC')
     } else {
       queryBuilder.orderBy('product.stockQuantity', 'DESC')
     }

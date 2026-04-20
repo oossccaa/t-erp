@@ -7,6 +7,10 @@
         <p class="page-description">管理進貨訂單、追蹤進貨狀態及收貨記錄</p>
       </div>
       <div class="header-actions">
+        <el-button :loading="exporting" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          匯出 CSV
+        </el-button>
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新增進貨單
@@ -16,7 +20,7 @@
 
     <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :model="filters" :inline="true" class="search-form">
+      <el-form :model="filters" :inline="true" class="search-form" @submit.prevent>
         <el-form-item label="關鍵字">
           <el-input
             v-model="filters.keyword"
@@ -197,16 +201,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Check, Close, Box, Back } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Edit, Check, Close, Box, Back, Download } from '@element-plus/icons-vue'
 import { purchaseOrdersApi, PurchaseOrderStatus, type PurchaseOrder, type CancelOrderParams, type RevertOrderParams } from '@/api/purchase-orders'
 import PurchaseOrderDialog from '@/components/purchase-orders/PurchaseOrderDialog.vue'
 import ReceiveItemsDialog from '@/components/purchase-orders/ReceiveItemsDialog.vue'
 import CancelOrderDialog from '@/components/common/CancelOrderDialog.vue'
 import RevertOrderDialog from '@/components/common/RevertOrderDialog.vue'
+import { downloadCsv } from '@/utils/export-csv'
 
 const loading = ref(false)
+const exporting = ref(false)
 const tableData = ref<PurchaseOrder[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -410,6 +416,46 @@ const handleReceiveConfirm = async (items: Array<{ itemId: number; receivedQuant
   }
 }
 
+// 匯出 CSV
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    const query: any = {
+      keyword: filters.value.keyword || undefined,
+      status: filters.value.status || undefined,
+      startDate: dateRange.value?.[0] || undefined,
+      endDate: dateRange.value?.[1] || undefined,
+      page: 1,
+      limit: 10000,
+    }
+    const response = await purchaseOrdersApi.getPurchaseOrders(query)
+    const rows = (response.data?.items || []) as any[]
+    if (rows.length === 0) {
+      ElMessage.warning('沒有可匯出的資料')
+      return
+    }
+    downloadCsv(
+      rows,
+      [
+        { header: '單號', value: (r) => r.orderNumber },
+        { header: '供應商', value: (r) => r.supplier?.name ?? '' },
+        { header: '統一編號', value: (r) => r.supplier?.taxId ?? '' },
+        { header: '訂單日期', value: (r) => r.orderDate },
+        { header: '預計交貨日期', value: (r) => r.expectedDeliveryDate ?? '' },
+        { header: '總金額', value: (r) => Number(r.totalAmount) || 0 },
+        { header: '狀態', value: (r) => getStatusText(r.status) },
+        { header: '付款狀態', value: (r) => r.paymentStatus ?? '' },
+      ],
+      `進貨單_${new Date().toISOString().slice(0, 10)}`,
+    )
+    ElMessage.success(`已匯出 ${rows.length} 筆`)
+  } catch (error) {
+    console.error('匯出失敗:', error)
+  } finally {
+    exporting.value = false
+  }
+}
+
 // 搜尋
 const handleSearch = () => {
   currentPage.value = 1
@@ -464,6 +510,10 @@ defineOptions({
 
 onMounted(() => {
   loadData()
+})
+
+onActivated(() => {
+  handleReset()
 })
 </script>
 

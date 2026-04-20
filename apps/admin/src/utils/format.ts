@@ -25,6 +25,18 @@ export const formatCurrency = (amount: number | string, currency = 'TWD'): strin
 // formatMoney 別名，用於向後兼容
 export const formatMoney = formatCurrency
 
+// 金額簡寫：大於萬用「萬」，大於億用「億」，避免統計卡跑版
+// 例：73,465,200 → 7,346.5 萬；123,456,789 → 1.23 億；1,500 → 1,500
+export const formatMoneyShort = (amount: number | string): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount
+  if (isNaN(num)) return '0'
+  const abs = Math.abs(num)
+  const sign = num < 0 ? '-' : ''
+  if (abs >= 1e8) return `${sign}${(abs / 1e8).toFixed(2)} 億`
+  if (abs >= 1e4) return `${sign}${(abs / 1e4).toFixed(1).replace(/\.0$/, '')} 萬`
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(num)
+}
+
 // 格式化數字
 export const formatNumber = (num: number | string, decimals = 0): string => {
   const number = typeof num === 'string' ? parseFloat(num) : num

@@ -45,8 +45,9 @@ use([
 ])
 
 // Props
+type Granularity = 'day' | 'week' | 'month'
 interface Props {
-  period: '7d' | '30d' | '90d'
+  granularity: Granularity
 }
 
 const props = defineProps<Props>()
@@ -64,27 +65,77 @@ const chartData = ref<{
 })
 
 /**
- * 計算日期範圍
+ * 根據粒度計算查詢範圍（要抓足夠資料做加總）
+ * day: 近 14 天
+ * week: 近 12 週（84 天）
+ * month: 近 12 個月（從當月回推 11 個月的月初）
  */
-const calculateDateRange = (period: string) => {
+const calculateDateRange = (granularity: Granularity) => {
   const endDate = dayjs().format('YYYY-MM-DD')
   let startDate = ''
+  switch (granularity) {
+    case 'day':
+      startDate = dayjs().subtract(13, 'day').format('YYYY-MM-DD')
+      break
+    case 'week':
+      startDate = dayjs().subtract(11, 'week').startOf('week').format('YYYY-MM-DD')
+      break
+    case 'month':
+      startDate = dayjs().subtract(11, 'month').startOf('month').format('YYYY-MM-DD')
+      break
+  }
+  return { startDate, endDate }
+}
 
-  switch (period) {
-    case '7d':
-      startDate = dayjs().subtract(6, 'day').format('YYYY-MM-DD')
-      break
-    case '30d':
-      startDate = dayjs().subtract(29, 'day').format('YYYY-MM-DD')
-      break
-    case '90d':
-      startDate = dayjs().subtract(89, 'day').format('YYYY-MM-DD')
-      break
-    default:
-      startDate = dayjs().subtract(6, 'day').format('YYYY-MM-DD')
+/**
+ * 把每日 trend 資料依粒度分組加總
+ */
+const bucketize = (
+  trend: Array<{ date: string; amount: number; orderCount: number }>,
+  granularity: Granularity,
+) => {
+  if (granularity === 'day') {
+    return {
+      dates: trend.map((t) => t.date),
+      amounts: trend.map((t) => Number(t.amount) || 0),
+      orderCounts: trend.map((t) => Number(t.orderCount) || 0),
+    }
   }
 
-  return { startDate, endDate }
+  const now = dayjs()
+  const buckets = new Map<string, { amount: number; orderCount: number; label: string }>()
+
+  // 預先建立空桶，確保每一期都出現（避免沒單的月份被略過）
+  if (granularity === 'week') {
+    for (let i = 11; i >= 0; i--) {
+      const weekStart = now.subtract(i, 'week').startOf('week')
+      const key = weekStart.format('YYYY-MM-DD')
+      buckets.set(key, { amount: 0, orderCount: 0, label: weekStart.format('MM/DD') })
+    }
+  } else {
+    for (let i = 11; i >= 0; i--) {
+      const monthStart = now.subtract(i, 'month').startOf('month')
+      const key = monthStart.format('YYYY-MM')
+      buckets.set(key, { amount: 0, orderCount: 0, label: monthStart.format('YYYY-MM') })
+    }
+  }
+
+  for (const t of trend) {
+    const d = dayjs(t.date)
+    if (!d.isValid()) continue
+    const key = granularity === 'week' ? d.startOf('week').format('YYYY-MM-DD') : d.format('YYYY-MM')
+    const bucket = buckets.get(key)
+    if (!bucket) continue
+    bucket.amount += Number(t.amount) || 0
+    bucket.orderCount += Number(t.orderCount) || 0
+  }
+
+  const entries = Array.from(buckets.values())
+  return {
+    dates: entries.map((b) => b.label),
+    amounts: entries.map((b) => b.amount),
+    orderCounts: entries.map((b) => b.orderCount),
+  }
 }
 
 /**
@@ -93,7 +144,7 @@ const calculateDateRange = (period: string) => {
 const loadChartData = async () => {
   try {
     loading.value = true
-    const { startDate, endDate } = calculateDateRange(props.period)
+    const { startDate, endDate } = calculateDateRange(props.granularity)
 
     const res = await saleOrdersApi.getDateRangeSalesReport({
       startDate,
@@ -101,16 +152,7 @@ const loadChartData = async () => {
     })
 
     if (res.success && res.data && res.data.trend) {
-      // 提取 trend 數據
-      const dates = res.data.trend.map((item: any) => item.date)
-      const amounts = res.data.trend.map((item: any) => item.amount)
-      const orderCounts = res.data.trend.map((item: any) => item.orderCount)
-
-      chartData.value = {
-        dates,
-        amounts,
-        orderCounts
-      }
+      chartData.value = bucketize(res.data.trend as any, props.granularity)
     }
   } catch (error) {
     console.error('加載銷售趨勢數據失敗', error)
@@ -143,8 +185,12 @@ const option = computed(() => ({
 
       const raw = params[0].axisValue
       const d = dayjs(raw)
-      const date = d.isValid() ? d.format('YYYY-MM-DD') : raw
-      let result = `${date}<br/>`
+      const header = props.granularity === 'day' && d.isValid()
+        ? d.format('YYYY-MM-DD')
+        : props.granularity === 'week'
+          ? `${raw} 當週`
+          : raw
+      let result = `${header}<br/>`
 
       params.forEach((param: any) => {
         const value = param.value
@@ -262,8 +308,8 @@ onMounted(() => {
   loadChartData()
 })
 
-// 監聽 period 變化
-watch(() => props.period, () => {
+// 監聽粒度變化
+watch(() => props.granularity, () => {
   loadChartData()
 })
 </script>

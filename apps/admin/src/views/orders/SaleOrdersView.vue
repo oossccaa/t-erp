@@ -7,6 +7,10 @@
         <p class="page-description">管理銷售訂單、追蹤出貨狀態及物流資訊</p>
       </div>
       <div class="header-actions">
+        <el-button :loading="exporting" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          匯出 CSV
+        </el-button>
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新增銷貨單
@@ -16,7 +20,7 @@
 
     <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :model="filters" :inline="true" class="search-form">
+      <el-form :model="filters" :inline="true" class="search-form" @submit.prevent>
         <el-form-item label="關鍵字">
           <el-input
             v-model="filters.keyword"
@@ -210,16 +214,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Check, Close, Van, Finished, Back } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Edit, Check, Close, Van, Finished, Back, Download } from '@element-plus/icons-vue'
 import { saleOrdersApi, SaleOrderStatus, type SaleOrder, type CancelOrderParams, type RevertOrderParams } from '@/api/sale-orders'
 import SaleOrderDialog from '@/components/sale-orders/SaleOrderDialog.vue'
 import ShipOrderDialog from '@/components/sale-orders/ShipOrderDialog.vue'
 import CancelOrderDialog from '@/components/common/CancelOrderDialog.vue'
 import RevertOrderDialog from '@/components/common/RevertOrderDialog.vue'
+import { downloadCsv } from '@/utils/export-csv'
 
 const loading = ref(false)
+const exporting = ref(false)
 const tableData = ref<SaleOrder[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -310,16 +316,33 @@ const handleEdit = (row: SaleOrder) => {
   dialogVisible.value = true
 }
 
+// 建立確認對話框 HTML（顯示客戶名 + 日期）
+const buildOrderConfirmHtml = (row: SaleOrder, action: string) => {
+  const today = new Date().toLocaleDateString('zh-TW')
+  const customer = row.customer?.name || '未知客戶'
+  return `
+    <div style="line-height: 1.8;">
+      <div>${action}</div>
+      <div style="margin-top: 8px; color: #606266;">
+        單號：<b>${row.orderNumber}</b><br/>
+        客戶：<b>${customer}</b><br/>
+        日期：<b>${today}</b>
+      </div>
+    </div>
+  `
+}
+
 // 確認銷貨單
 const handleConfirm = async (row: SaleOrder) => {
   try {
     await ElMessageBox.confirm(
-      `確定要確認銷貨單 "${row.orderNumber}" 嗎？`,
-      '確認',
+      buildOrderConfirmHtml(row, '確認此銷貨單？'),
+      '確認銷貨單',
       {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning',
+        dangerouslyUseHTMLString: true,
       }
     )
 
@@ -362,12 +385,13 @@ const handleShipConfirm = async (items: Array<{ itemId: number; shippedQuantity:
 const handleMarkDelivered = async (row: SaleOrder) => {
   try {
     await ElMessageBox.confirm(
-      `確定要標記銷貨單 "${row.orderNumber}" 為已送達嗎？`,
+      buildOrderConfirmHtml(row, '標記此銷貨單為已送達？'),
       '確認送達',
       {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning',
+        dangerouslyUseHTMLString: true,
       }
     )
 
@@ -453,6 +477,47 @@ const handleRevertConfirm = async (data: RevertOrderParams) => {
   }
 }
 
+// 匯出 CSV
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    const query: any = {
+      keyword: filters.value.keyword || undefined,
+      status: filters.value.status || undefined,
+      startDate: dateRange.value?.[0] || undefined,
+      endDate: dateRange.value?.[1] || undefined,
+      page: 1,
+      limit: 10000,
+    }
+    const response = await saleOrdersApi.getSaleOrders(query)
+    const rows = (response.data?.items || []) as any[]
+    if (rows.length === 0) {
+      ElMessage.warning('沒有可匯出的資料')
+      return
+    }
+    downloadCsv(
+      rows,
+      [
+        { header: '單號', value: (r) => r.orderNumber },
+        { header: '客戶', value: (r) => r.customer?.name ?? '' },
+        { header: '統一編號', value: (r) => r.customer?.taxId ?? '' },
+        { header: '訂單日期', value: (r) => r.orderDate },
+        { header: '預計出貨日期', value: (r) => r.expectedShippingDate ?? '' },
+        { header: '總金額', value: (r) => Number(r.totalAmount) || 0 },
+        { header: '狀態', value: (r) => getStatusText(r.status) },
+        { header: '付款狀態', value: (r) => r.paymentStatus ?? '' },
+        { header: '出貨狀態', value: (r) => r.shippingStatus ?? '' },
+      ],
+      `銷貨單_${new Date().toISOString().slice(0, 10)}`,
+    )
+    ElMessage.success(`已匯出 ${rows.length} 筆`)
+  } catch (error) {
+    console.error('匯出失敗:', error)
+  } finally {
+    exporting.value = false
+  }
+}
+
 // 搜尋
 const handleSearch = () => {
   currentPage.value = 1
@@ -505,6 +570,10 @@ defineOptions({
 
 onMounted(() => {
   loadData()
+})
+
+onActivated(() => {
+  handleReset()
 })
 </script>
 

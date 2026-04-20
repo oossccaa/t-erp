@@ -49,6 +49,11 @@
 
       <el-row :gutter="16">
         <el-col :span="12">
+          <el-form-item label="統一編號">
+            <el-input :model-value="selectedCustomerTaxId" disabled placeholder="選擇客戶後自動帶入" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
           <el-form-item label="預計出貨日期">
             <el-date-picker
               v-model="form.expectedShippingDate"
@@ -60,6 +65,9 @@
             />
           </el-form-item>
         </el-col>
+      </el-row>
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="預計交貨日期">
             <el-date-picker
@@ -410,6 +418,11 @@ const visible = computed({
 
 const isEdit = computed(() => props.mode === 'edit')
 const isView = computed(() => props.mode === 'view')
+
+const selectedCustomerTaxId = computed(() => {
+  const c = customers.value.find((x) => x.id === form.customerId)
+  return c?.taxId || '—'
+})
 
 // 折扣欄預設隱藏，需要時勾選顯示
 const showDiscount = ref(false)

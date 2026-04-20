@@ -23,62 +23,22 @@
     <!-- 統計卡片 -->
     <el-row :gutter="16" class="stats-cards">
       <el-col :xs="12" :sm="6">
-        <el-card class="stats-card" shadow="hover">
-          <div class="stats-content">
-            <div class="stats-icon primary">
-              <el-icon><Box /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-value">{{ stats.totalProducts }}</div>
-              <div class="stats-label">總商品數</div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard :icon="Box" tone="primary" label="總商品數" :value="stats.totalProducts" />
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card class="stats-card" shadow="hover">
-          <div class="stats-content">
-            <div class="stats-icon warning">
-              <el-icon><Warning /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-value">{{ stats.lowStockProducts }}</div>
-              <div class="stats-label">低庫存警告</div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard :icon="Warning" tone="warning" label="低庫存警告" :value="stats.lowStockProducts" />
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card class="stats-card" shadow="hover">
-          <div class="stats-content">
-            <div class="stats-icon danger">
-              <el-icon><CircleClose /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-value">{{ stats.outOfStockProducts }}</div>
-              <div class="stats-label">缺貨商品</div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard :icon="CircleClose" tone="danger" label="缺貨商品" :value="stats.outOfStockProducts" />
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card class="stats-card" shadow="hover">
-          <div class="stats-content">
-            <div class="stats-icon success">
-              <el-icon><Coin /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-value">{{ formatNumber(stats.totalValue) }}</div>
-              <div class="stats-label">總庫存值</div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard :icon="Coin" tone="success" label="總庫存值" :value="formatMoneyShort(stats.totalValue)" />
       </el-col>
     </el-row>
 
     <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :model="filters" :inline="true" class="search-form">
+      <el-form :model="filters" :inline="true" class="search-form" @submit.prevent>
         <el-form-item label="商品名稱">
           <el-input
             v-model="filters.keyword"
@@ -233,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onActivated } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Box,
@@ -247,10 +207,12 @@ import {
   Finished,
 } from '@element-plus/icons-vue'
 import StocktakeDialog from '@/components/inventory/StocktakeDialog.vue'
+import StatCard from '@/components/common/StatCard.vue'
 import { productsApi } from '@/api/products'
 import { inventoryApi, InventoryTransactionType } from '@/api/inventory'
 import { categoriesApi } from '@/api/categories'
 import type { Product, Category } from '@/types'
+import { formatMoneyShort } from '@/utils/format'
 
 const loading = ref(false)
 const stocktakeVisible = ref(false)
@@ -287,11 +249,6 @@ const transactions = ref<any[]>([])
 const transactionsPage = ref(1)
 const transactionsPageSize = ref(10)
 const transactionsTotal = ref(0)
-
-// 格式化數字
-const formatNumber = (num: number) => {
-  return num.toLocaleString()
-}
 
 // 獲取庫存狀態樣式
 const getStockClass = (row: Product) => {
@@ -447,6 +404,10 @@ onMounted(() => {
   loadCategories()
   loadData()
 })
+
+onActivated(() => {
+  handleReset()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -479,60 +440,6 @@ onMounted(() => {
 
 .stats-cards {
   margin-bottom: 16px;
-}
-
-.stats-card {
-  .stats-content {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .stats-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-
-      &.primary {
-        background-color: var(--el-color-primary-light-9);
-        color: var(--el-color-primary);
-      }
-
-      &.success {
-        background-color: var(--el-color-success-light-9);
-        color: var(--el-color-success);
-      }
-
-      &.warning {
-        background-color: var(--el-color-warning-light-9);
-        color: var(--el-color-warning);
-      }
-
-      &.danger {
-        background-color: var(--el-color-danger-light-9);
-        color: var(--el-color-danger);
-      }
-    }
-
-    .stats-info {
-      flex: 1;
-
-      .stats-value {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--el-text-color-primary);
-        margin-bottom: 4px;
-      }
-
-      .stats-label {
-        color: var(--el-text-color-secondary);
-        font-size: 14px;
-      }
-    }
-  }
 }
 
 .filter-card {

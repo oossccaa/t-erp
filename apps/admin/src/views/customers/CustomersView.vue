@@ -16,7 +16,7 @@
 
     <!-- 搜尋和篩選 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :model="filters" :inline="true" class="search-form">
+      <el-form :model="filters" :inline="true" class="search-form" @submit.prevent>
         <el-form-item label="客戶名稱">
           <el-input
             v-model="filters.name"
@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, Edit, Delete } from '@element-plus/icons-vue'
 import type { Customer } from '@/types'
@@ -209,6 +209,10 @@ defineOptions({
 
 onMounted(() => {
   loadData()
+})
+
+onActivated(() => {
+  handleReset()
 })
 </script>
 

@@ -10,7 +10,7 @@
 
     <!-- 篩選條件 -->
     <el-card class="filter-card" shadow="never">
-      <el-form :inline="true" :model="filterForm">
+      <el-form :inline="true" :model="filterForm" @submit.prevent>
         <el-form-item label="日期範圍">
           <el-date-picker
             v-model="filterForm.dateRange"
@@ -49,7 +49,7 @@
     <el-row :gutter="20" class="summary-cards">
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card">
-          <el-statistic title="總採購額" :value="reportData.summary.totalAmount" :precision="2">
+          <el-statistic title="總採購額" :value="reportData.summary.totalAmount" :formatter="formatMoneyShort">
             <template #prefix>
               <el-icon style="color: #E6A23C"><Money /></el-icon>
             </template>
@@ -69,7 +69,7 @@
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card">
-          <el-statistic title="平均訂單金額" :value="reportData.summary.avgOrderValue" :precision="2">
+          <el-statistic title="平均訂單金額" :value="reportData.summary.avgOrderValue" :formatter="formatMoneyShort">
             <template #prefix>
               <el-icon style="color: #67C23A"><TrendCharts /></el-icon>
             </template>
@@ -187,6 +187,7 @@ import {
   Loading
 } from '@element-plus/icons-vue'
 import { useChartTheme } from '@/composables/useChartTheme'
+import { formatMoneyShort } from '@/utils/format'
 
 const { textColor } = useChartTheme()
 
