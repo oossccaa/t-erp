@@ -59,4 +59,11 @@ export class CreateProductDto {
   @Min(0, { message: '最低庫存警告不能為負數' })
   @Type(() => Number)
   minStockLevel: number
+
+  @ApiProperty({ description: '單件重量(kg)', example: 1.5, required: false })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 3 }, { message: '重量最多三位小數' })
+  @Min(0, { message: '重量不能為負數' })
+  @Type(() => Number)
+  weight?: number
 }

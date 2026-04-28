@@ -12,6 +12,15 @@ export enum SaleOrderStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum SalePaymentStatus {
+  UNPAID = 'unpaid',
+  PARTIALLY_PAID = 'partially_paid',
+  PAID = 'paid',
+  REFUNDED = 'refunded',
+  CANCELLED = 'cancelled',
+}
+
+
 export interface SaleOrderItem {
   id?: number
   productId: number
@@ -36,6 +45,8 @@ export interface SaleOrder {
   actualShippingDate?: string
   actualDeliveryDate?: string
   status: SaleOrderStatus
+  paymentStatus?: SalePaymentStatus
+  paidAmount?: number
   taxRate?: number
   discountRate?: number
   discountAmount?: number
@@ -198,6 +209,10 @@ export const saleOrdersApi = {
   // 完成訂單
   completeSaleOrder: (id: number) =>
     request.patch<ApiResponse<SaleOrder>>(`/sale-orders/${id}/complete`),
+
+  // 切換收款狀態（true = 已收款 / false = 未收款）
+  setPaymentStatus: (id: number, paid: boolean) =>
+    request.patch<ApiResponse<SaleOrder>>(`/sale-orders/${id}/payment-status`, { paid }),
 
   // 獲取月度銷售報表
   getMonthlySalesReport: (query: MonthlySalesReportQuery) =>

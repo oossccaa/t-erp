@@ -8,6 +8,8 @@ export interface Product extends BaseEntity {
   category?: Category
   unitPrice: number
   costPrice: number
+  unit?: string
+  weight?: number
   stockQuantity: number
   minStockLevel: number
   isActive: boolean

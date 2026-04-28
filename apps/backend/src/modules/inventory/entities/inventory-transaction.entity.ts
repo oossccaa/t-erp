@@ -36,7 +36,7 @@ export class InventoryTransaction extends BaseEntity {
   @JoinColumn({ name: 'productId' })
   product: Product
 
-  @Column({ type: 'enum', enum: InventoryTransactionType })
+  @Column({ type: 'simple-enum', enum: InventoryTransactionType })
   type: InventoryTransactionType
 
   @Column('int')

@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import { features } from '@/config/features'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import NProgress from 'nprogress'
@@ -170,8 +171,11 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+// desktop（Electron file://）必須用 hash 路由，否則 navigate 會被瀏覽器當成檔案路徑找不到
+const history = features.target === 'desktop' ? createWebHashHistory() : createWebHistory()
+
 const router = createRouter({
-  history: createWebHistory(),
+  history,
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

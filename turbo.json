@@ -73,6 +73,12 @@
     "DATABASE_URL",
     "JWT_SECRET",
     "REDIS_URL",
-    "DB_NAME"
+    "DB_NAME",
+    "FEATURE_WEIGHT",
+    "VITE_FEATURE_WEIGHT",
+    "TARGET",
+    "VITE_TARGET",
+    "DB_TYPE",
+    "SQLITE_PATH"
   ]
 }

@@ -95,12 +95,24 @@
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="totalAmount" label="總金額" width="140" align="right">
+        <el-table-column prop="paymentStatus" label="付款狀態" width="110">
           <template #default="{ row }">
-            <span class="amount-cell">NT$ {{ Number(row.totalAmount || 0).toLocaleString() }}</span>
+            <el-tag :type="getPaymentStatusType(row.paymentStatus)" size="small">
+              {{ getPaymentStatusText(row.paymentStatus) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column prop="totalAmount" label="總金額" width="140" align="right">
+          <template #default="{ row }">
+            <div class="amount-cell-wrap">
+              <span class="amount-cell">NT$ {{ Number(row.totalAmount || 0).toLocaleString() }}</span>
+              <span v-if="hasOutstanding(row)" class="amount-remaining">
+                剩 NT$ {{ Number(row.totalAmount - (row.paidAmount || 0)).toLocaleString() }}
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="290" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button size="small" @click="handleView(row)">
@@ -141,6 +153,15 @@
               >
                 <el-icon><Van /></el-icon>
                 送達
+              </el-button>
+              <el-button
+                v-if="canTogglePayment(row)"
+                size="small"
+                :type="row.paymentStatus === 'paid' ? '' : 'success'"
+                @click="handleTogglePayment(row)"
+              >
+                <el-icon><Money /></el-icon>
+                {{ row.paymentStatus === 'paid' ? '改未收款' : '標記已收款' }}
               </el-button>
               <el-button
                 v-if="canRevertOrder(row)"
@@ -210,14 +231,15 @@
       :target-status="(currentOrder ? getRevertTargetStatus(currentOrder.status) : null) ?? undefined"
       @confirm="handleRevertConfirm"
     />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Check, Close, Van, Finished, Back, Download } from '@element-plus/icons-vue'
-import { saleOrdersApi, SaleOrderStatus, type SaleOrder, type CancelOrderParams, type RevertOrderParams } from '@/api/sale-orders'
+import { Plus, Search, Refresh, View, Edit, Check, Close, Van, Finished, Back, Download, Money } from '@element-plus/icons-vue'
+import { saleOrdersApi, SaleOrderStatus, SalePaymentStatus, type SaleOrder, type CancelOrderParams, type RevertOrderParams } from '@/api/sale-orders'
 import SaleOrderDialog from '@/components/sale-orders/SaleOrderDialog.vue'
 import ShipOrderDialog from '@/components/sale-orders/ShipOrderDialog.vue'
 import CancelOrderDialog from '@/components/common/CancelOrderDialog.vue'
@@ -270,6 +292,41 @@ const getStatusText = (status: SaleOrderStatus): string => {
     [SaleOrderStatus.CANCELLED]: '已取消',
   }
   return texts[status] || status
+}
+
+const getPaymentStatusType = (status?: SalePaymentStatus): string => {
+  const types: Record<SalePaymentStatus, string> = {
+    [SalePaymentStatus.UNPAID]: 'info',
+    [SalePaymentStatus.PARTIALLY_PAID]: 'warning',
+    [SalePaymentStatus.PAID]: 'success',
+    [SalePaymentStatus.REFUNDED]: 'danger',
+    [SalePaymentStatus.CANCELLED]: 'danger',
+  }
+  return (status && types[status]) || 'info'
+}
+
+const getPaymentStatusText = (status?: SalePaymentStatus): string => {
+  const texts: Record<SalePaymentStatus, string> = {
+    [SalePaymentStatus.UNPAID]: '未收款',
+    [SalePaymentStatus.PARTIALLY_PAID]: '部分收款',
+    [SalePaymentStatus.PAID]: '已收款',
+    [SalePaymentStatus.REFUNDED]: '已退款',
+    [SalePaymentStatus.CANCELLED]: '已取消',
+  }
+  return (status && texts[status]) || '未收款'
+}
+
+const hasOutstanding = (row: SaleOrder): boolean => {
+  const total = Number(row.totalAmount) || 0
+  const paid = Number(row.paidAmount) || 0
+  return total - paid > 0.001 && row.status !== SaleOrderStatus.CANCELLED
+}
+
+// 收款狀態能否切換：草稿/取消/退款不可
+const canTogglePayment = (row: SaleOrder): boolean => {
+  if (row.status === SaleOrderStatus.DRAFT || row.status === SaleOrderStatus.CANCELLED) return false
+  if (row.paymentStatus === SalePaymentStatus.REFUNDED) return false
+  return true
 }
 
 // 獲取銷貨單列表
@@ -477,6 +534,26 @@ const handleRevertConfirm = async (data: RevertOrderParams) => {
   }
 }
 
+// 切換收款狀態（已收 ↔ 未收）
+const handleTogglePayment = async (row: SaleOrder) => {
+  const targetPaid = row.paymentStatus !== SalePaymentStatus.PAID
+  const action = targetPaid ? '標記為已收款' : '改為未收款'
+  try {
+    await ElMessageBox.confirm(
+      `確定要把銷貨單「${row.orderNumber}」${action}嗎？`,
+      '收款狀態確認',
+      { confirmButtonText: '確定', cancelButtonText: '取消', type: 'warning' }
+    )
+    await saleOrdersApi.setPaymentStatus(row.id!, targetPaid)
+    ElMessage.success(`已${action}`)
+    loadData()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      // 錯誤訊息已由 request.ts 攔截器處理
+    }
+  }
+}
+
 // 匯出 CSV
 const handleExport = async () => {
   try {
@@ -657,6 +734,18 @@ onActivated(() => {
 
 .amount-cell {
   white-space: nowrap;
+}
+
+.amount-cell-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.4;
+}
+
+.amount-remaining {
+  color: var(--el-color-warning);
+  font-size: 12px;
 }
 
 .action-buttons {

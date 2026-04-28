@@ -484,6 +484,28 @@ export class SaleOrdersService {
     return this.findOne(id)
   }
 
+  /**
+   * 簡化版付款：只切換「已收款 / 未收款」兩種狀態，不存付款明細。
+   * 之後若需要部分收款 / 對帳 / 收款歷史，再加 sale_payments 表。
+   */
+  async setPaymentStatus(id: number, paid: boolean): Promise<SaleOrder> {
+    const order = await this.findOne(id)
+
+    if (order.status === SaleOrderStatus.CANCELLED) {
+      throw new BadRequestException('已取消訂單不可調整收款狀態')
+    }
+    if (order.paymentStatus === PaymentStatus.REFUNDED) {
+      throw new BadRequestException('已退款訂單不可調整收款狀態')
+    }
+
+    const totalAmount = Number(order.totalAmount)
+    await this.saleOrderRepository.update(id, {
+      paidAmount: paid ? totalAmount : 0,
+      paymentStatus: paid ? PaymentStatus.PAID : PaymentStatus.UNPAID,
+    })
+    return this.findOne(id)
+  }
+
   async getStatistics() {
     const stats = await this.saleOrderRepository
       .createQueryBuilder('order')

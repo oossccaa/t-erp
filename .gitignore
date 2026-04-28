@@ -8,6 +8,13 @@ dist/
 build/
 */build/
 
+# Desktop (Electron) build artifacts
+apps/desktop/build-resources/
+apps/desktop/release/
+
+# Local SQLite databases (dev / desktop runtime)
+apps/backend/data/
+
 # Environment files
 .env
 .env.local

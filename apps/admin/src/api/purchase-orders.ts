@@ -12,6 +12,14 @@ export enum PurchaseOrderStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum PurchasePaymentStatus {
+  UNPAID = 'unpaid',
+  PARTIALLY_PAID = 'partially_paid',
+  PAID = 'paid',
+  OVERDUE = 'overdue',
+}
+
+
 export interface PurchaseOrderItem {
   id?: number
   productId: number
@@ -31,6 +39,8 @@ export interface PurchaseOrder {
   orderDate: string
   expectedDeliveryDate?: string
   status: PurchaseOrderStatus
+  paymentStatus?: PurchasePaymentStatus
+  paidAmount?: number
   taxRate?: number
   discountRate?: number
   discountAmount?: number
@@ -171,6 +181,11 @@ export const purchaseOrdersApi = {
   // 接收貨物
   receiveItems: (id: number, items: Array<{ itemId: number; receivedQuantity: number }>) =>
     request.patch<ApiResponse<PurchaseOrder>>(`/purchase-orders/${id}/receive`, { items }),
+
+  // 登記付款
+  // 切換付款狀態（true = 已付款 / false = 未付款）
+  setPaymentStatus: (id: number, paid: boolean) =>
+    request.patch<ApiResponse<PurchaseOrder>>(`/purchase-orders/${id}/payment-status`, { paid }),
 
   // 獲取月度採購報表
   getMonthlyPurchaseReport: (query: MonthlyPurchaseReportQuery) =>

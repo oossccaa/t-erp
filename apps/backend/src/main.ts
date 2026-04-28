@@ -73,7 +73,13 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000
   await app.listen(port)
-  
+
+  // 首次啟動 seed 預設管理員（users 為空時）
+  const { DataSource } = await import('typeorm')
+  const { ensureBootstrapAdmin } = await import('./database/bootstrap-seed')
+  const dataSource = app.get(DataSource)
+  await ensureBootstrapAdmin(dataSource)
+
   console.log(`🚀 Application is running on: http://localhost:${port}`)
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`)
   console.log(`🔐 Default Admin: username=admin, password=admin123`)

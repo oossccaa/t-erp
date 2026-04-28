@@ -133,4 +133,20 @@ export class PurchaseOrdersController {
   ) {
     return this.purchaseOrdersService.receiveItems(id, body.items)
   }
+
+  @Patch(':id/payment-status')
+  @ApiOperation({ summary: '切換付款狀態（已付 / 未付）' })
+  @ApiResponse({ status: 200, description: '更新成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async setPaymentStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { paid: boolean }
+  ) {
+    const result = await this.purchaseOrdersService.setPaymentStatus(id, body.paid)
+    return {
+      success: true,
+      data: result,
+      message: body.paid ? '已標記為已付款' : '已標記為未付款'
+    }
+  }
 }

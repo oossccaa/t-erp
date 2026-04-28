@@ -100,7 +100,24 @@
           </el-form-item>
         </el-col>
       </el-row>
-      
+
+      <el-row v-if="features.weight" :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="單件重量" prop="weight">
+            <el-input-number
+              v-model="form.weight"
+              :min="0"
+              :precision="3"
+              :step="0.1"
+              style="width: 100%"
+            />
+            <template #append>
+              <span style="margin-left: 8px; color: #909399; font-size: 12px;">kg</span>
+            </template>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
       <el-form-item v-if="isEdit" label="狀態">
         <el-switch v-model="form.isActive" />
         <span style="margin-left: 12px; color: #909399; font-size: 12px;">
@@ -124,6 +141,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { categoriesApi } from '@/api/categories'
+import { features } from '@/config/features'
 import type { Category } from '@/types'
 
 interface ProductForm {
@@ -135,6 +153,7 @@ interface ProductForm {
   costPrice: number
   stockQuantity: number
   minStockLevel: number
+  weight?: number
   isActive?: boolean  // 可選，創建時不需要
 }
 
@@ -177,6 +196,7 @@ const form = reactive<ProductForm>({
   costPrice: 0,
   stockQuantity: 0,
   minStockLevel: 0,
+  weight: 0,
   isActive: true
 })
 
@@ -211,6 +231,7 @@ const resetForm = () => {
     costPrice: 0,
     stockQuantity: 0,
     minStockLevel: 0,
+    weight: 0,
     isActive: true
   })
   formRef.value?.clearValidate()
@@ -270,6 +291,7 @@ watch(
         costPrice: newProduct.costPrice || 0,
         stockQuantity: newProduct.stockQuantity || 0,
         minStockLevel: newProduct.minStockLevel || 0,
+        weight: Number(newProduct.weight) || 0,
         isActive: newProduct.isActive ?? true
       })
     }

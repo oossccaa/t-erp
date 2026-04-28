@@ -154,7 +154,8 @@ export class InventoryService {
     categoryId?: number
     lowStockOnly?: boolean
   }) {
-    const queryBuilder = this.productRepository
+    // 1. 全集產品（僅依 categoryId 收斂；lowStockOnly 不參與統計，避免「篩了之後總數變小」的誤導）
+    const baseBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .select([
@@ -169,14 +170,10 @@ export class InventoryService {
       ])
 
     if (query?.categoryId) {
-      queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId: query.categoryId })
+      baseBuilder.andWhere('product.categoryId = :categoryId', { categoryId: query.categoryId })
     }
 
-    if (query?.lowStockOnly) {
-      queryBuilder.andWhere('product.stockQuantity <= product.minStockLevel')
-    }
-
-    const products = await queryBuilder.getMany()
+    const products = await baseBuilder.getMany()
 
     const totalProducts = products.length
     const totalInventoryValue = products.reduce((sum, product) => {
@@ -184,11 +181,11 @@ export class InventoryService {
       const cost = Number(product.unitCost) || Number(product.costPrice) || 0
       return sum + Number(product.stockQuantity) * cost
     }, 0)
-    const lowStockProducts = products.filter(product => 
-      product.stockQuantity <= product.minStockLevel
+    const lowStockProducts = products.filter(product =>
+      Number(product.stockQuantity) <= Number(product.minStockLevel) && Number(product.stockQuantity) > 0
     ).length
-    const outOfStockProducts = products.filter(product => 
-      product.stockQuantity === 0
+    const outOfStockProducts = products.filter(product =>
+      Number(product.stockQuantity) === 0
     ).length
 
     return {
@@ -198,7 +195,9 @@ export class InventoryService {
         lowStockProducts,
         outOfStockProducts,
       },
-      products: query?.lowStockOnly ? products.filter(p => p.stockQuantity <= p.minStockLevel) : products
+      products: query?.lowStockOnly
+        ? products.filter(p => Number(p.stockQuantity) <= Number(p.minStockLevel))
+        : products
     }
   }
 

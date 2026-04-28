@@ -29,10 +29,10 @@ export class InventoryAdjustment extends BaseEntity {
   @Column({ unique: true, length: 50 })
   adjustmentNumber: string
 
-  @Column({ type: 'enum', enum: InventoryAdjustmentType })
+  @Column({ type: 'simple-enum', enum: InventoryAdjustmentType })
   type: InventoryAdjustmentType
 
-  @Column({ type: 'enum', enum: InventoryAdjustmentStatus, default: InventoryAdjustmentStatus.DRAFT })
+  @Column({ type: 'simple-enum', enum: InventoryAdjustmentStatus, default: InventoryAdjustmentStatus.DRAFT })
   status: InventoryAdjustmentStatus
 
   @Column({ type: 'date' })
@@ -52,7 +52,7 @@ export class InventoryAdjustment extends BaseEntity {
   @JoinColumn({ name: 'approvedById' })
   approvedBy: User
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   approvedAt: Date
 
   @Column({ length: 100, nullable: true })

@@ -64,6 +64,17 @@ export class Product extends BaseEntity {
   @Column({ length: 10, default: '個', comment: '計量單位' })
   unit: string
 
+  @ApiProperty({ description: '單件重量(kg)', example: 1.5, default: 0 })
+  @Column({
+    name: 'weight',
+    type: 'decimal',
+    precision: 10,
+    scale: 3,
+    default: 0,
+    comment: '單件重量(kg)',
+  })
+  weight: number
+
   @ApiProperty({ description: '庫存數量', example: 100 })
   @Column({ name: 'stock_quantity', default: 0, comment: '庫存數量' })
   stockQuantity: number

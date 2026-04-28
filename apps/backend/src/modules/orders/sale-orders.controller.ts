@@ -168,4 +168,20 @@ export class SaleOrdersController {
   async complete(@Param('id', ParseIntPipe) id: number) {
     return this.saleOrdersService.complete(id)
   }
+
+  @Patch(':id/payment-status')
+  @ApiOperation({ summary: '切換收款狀態（已收 / 未收）' })
+  @ApiResponse({ status: 200, description: '更新成功' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async setPaymentStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { paid: boolean }
+  ) {
+    const result = await this.saleOrdersService.setPaymentStatus(id, body.paid)
+    return {
+      success: true,
+      data: result,
+      message: body.paid ? '已標記為已收款' : '已標記為未收款'
+    }
+  }
 }

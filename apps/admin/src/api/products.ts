@@ -10,6 +10,7 @@ export interface CreateProductDto {
   costPrice: number
   stockQuantity: number
   minStockLevel: number
+  weight?: number
   // 注意：isActive 不在 CreateProductDto 中，後端會自動設為 true
 }
 

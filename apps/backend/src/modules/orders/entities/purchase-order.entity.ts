@@ -30,10 +30,10 @@ export class PurchaseOrder extends BaseEntity {
   @Column({ unique: true, length: 50 })
   orderNumber: string
 
-  @Column({ type: 'enum', enum: PurchaseOrderStatus, default: PurchaseOrderStatus.DRAFT })
+  @Column({ type: 'simple-enum', enum: PurchaseOrderStatus, default: PurchaseOrderStatus.DRAFT })
   status: PurchaseOrderStatus
 
-  @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.UNPAID })
+  @Column({ type: 'simple-enum', enum: PaymentStatus, default: PaymentStatus.UNPAID })
   paymentStatus: PaymentStatus
 
   @Column('int')
@@ -57,7 +57,7 @@ export class PurchaseOrder extends BaseEntity {
   @JoinColumn({ name: 'approvedById' })
   approvedBy: User
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   approvedAt: Date
 
   @Column({ type: 'date' })
@@ -111,7 +111,7 @@ export class PurchaseOrder extends BaseEntity {
   @Column({ length: 500, nullable: true })
   cancelReason: string
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   cancelledAt: Date
 
   @Column('int', { nullable: true })
@@ -121,7 +121,7 @@ export class PurchaseOrder extends BaseEntity {
   @JoinColumn({ name: 'cancelledById' })
   cancelledBy: User
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   statusHistory: Array<{
     fromStatus: string
     toStatus: string

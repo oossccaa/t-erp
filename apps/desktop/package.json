@@ -1,0 +1,51 @@
+{
+  "name": "@t-erp/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && unset ELECTRON_RUN_AS_NODE && DESKTOP_DEV=true node_modules/.bin/electron .",
+    "start": "unset ELECTRON_RUN_AS_NODE && node_modules/.bin/electron .",
+    "rebuild-natives": "node scripts/rebuild-natives.js",
+    "postinstall": "node scripts/rebuild-natives.js || echo 'native rebuild skipped (likely first install before pnpm finishes)'",
+    "package:mac": "electron-builder --mac --arm64 -c.extraMetadata.main=dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist release"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.1.0"
+  },
+  "build": {
+    "appId": "com.terp.desktop",
+    "productName": "T-ERP",
+    "directories": {
+      "output": "release"
+    },
+    "npmRebuild": false,
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "extraResources": [
+      {
+        "from": "build-resources/backend",
+        "to": "backend"
+      },
+      {
+        "from": "../admin/dist",
+        "to": "admin"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": "dmg"
+    }
+  }
+}

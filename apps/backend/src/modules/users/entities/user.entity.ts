@@ -27,7 +27,7 @@ export class User extends BaseEntity {
 
   @ApiProperty({ description: '用戶角色', enum: UserRole })
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: UserRole,
     default: UserRole.USER,
     comment: '用戶角色',

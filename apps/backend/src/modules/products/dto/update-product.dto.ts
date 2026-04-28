@@ -49,6 +49,13 @@ export class UpdateProductDto {
   @IsOptional()
   minStockLevel?: number
 
+  @ApiProperty({ description: '單件重量(kg)', example: 1.5, required: false })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 3 }, { message: '重量最多三位小數' })
+  @Min(0, { message: '重量不能為負數' })
+  @Type(() => Number)
+  weight?: number
+
   @ApiProperty({ description: '是否啟用', example: true, required: false })
   @IsBoolean({ message: '啟用狀態必須是布爾值' })
   @IsOptional()

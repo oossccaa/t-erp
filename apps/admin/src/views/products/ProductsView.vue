@@ -149,6 +149,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="minStockLevel" label="最低庫存" width="90" />
+        <el-table-column v-if="features.weight" prop="weight" label="重量(kg)" width="100" align="right">
+          <template #default="{ row }">{{ Number(row.weight || 0).toFixed(3) }}</template>
+        </el-table-column>
         <el-table-column prop="isActive" label="狀態" width="80">
           <template #default="{ row }">
             <el-switch
@@ -222,6 +225,7 @@ import type { Product, Category } from '@/types'
 import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
 import ProductDialog from '@/components/products/ProductDialog.vue'
+import { features } from '@/config/features'
 import { formatMoney, formatDateTime } from '@/utils/format'
 
 const getMargin = (row: Product): number | null => {

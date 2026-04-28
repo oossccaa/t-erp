@@ -223,6 +223,13 @@
               <span>總計:</span>
               <span class="amount">{{ formatCurrency(totalAmount) }}</span>
             </div>
+            <div v-if="features.weight" class="summary-item weight" :class="{ overweight: isOverweight }">
+              <span>總重量:</span>
+              <span class="amount">
+                {{ totalWeight.toLocaleString('zh-TW', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) }} kg
+                <span v-if="isOverweight" class="overweight-tip">超過載重 {{ truckCapacityKg }} kg</span>
+              </span>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -296,6 +303,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { suppliersApi } from '@/api/suppliers'
 import { productsApi } from '@/api/products'
+import { features } from '@/config/features'
 import type { Supplier, Product } from '@/types'
 import ProductListModal from '@/components/common/ProductListModal.vue'
 
@@ -413,6 +421,21 @@ const taxAmount = computed(() => {
 const totalAmount = computed(() => {
   return subtotal.value - discountAmount.value + taxAmount.value + (form.shippingCost || 0)
 })
+
+// 卡車容量（kg）— 預設 5000 kg
+const truckCapacityKg = 5000
+
+// 計算總重量
+const totalWeight = computed(() => {
+  return form.items.reduce((sum, item) => {
+    const product = products.value.find(p => p.id === item.productId)
+    const weight = Number(product?.weight) || 0
+    const qty = Number(item.quantity) || 0
+    return sum + weight * qty
+  }, 0)
+})
+
+const isOverweight = computed(() => features.weight && totalWeight.value > truckCapacityKg)
 
 // 格式化金額（含千分位）
 const formatCurrency = (amount: number | undefined) => {
@@ -698,6 +721,22 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: var(--el-color-primary);
+    }
+
+    &.weight {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--el-text-color-regular);
+
+      &.overweight {
+        color: var(--el-color-danger);
+        font-weight: 600;
+      }
+
+      .overweight-tip {
+        margin-left: 8px;
+        font-size: 12px;
+      }
     }
 
     .amount {

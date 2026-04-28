@@ -47,9 +47,9 @@
         <el-form-item>
           <div class="login-options">
             <el-checkbox v-model="rememberMe">記住我</el-checkbox>
-            <el-link type="primary" :underline="false" @click="handleForgotPassword">
+            <!-- <el-link type="primary" :underline="false" @click="handleForgotPassword">
               忘記密碼？
-            </el-link>
+            </el-link> -->
           </div>
         </el-form-item>
         

@@ -394,6 +394,24 @@ export class PurchaseOrdersService {
     return this.findOne(id)
   }
 
+  /**
+   * 簡化版付款：只切換「已付款 / 未付款」兩種狀態，不存付款明細。
+   */
+  async setPaymentStatus(id: number, paid: boolean): Promise<PurchaseOrder> {
+    const order = await this.findOne(id)
+
+    if (order.status === PurchaseOrderStatus.CANCELLED) {
+      throw new BadRequestException('已取消訂單不可調整付款狀態')
+    }
+
+    const totalAmount = Number(order.totalAmount)
+    await this.purchaseOrderRepository.update(id, {
+      paidAmount: paid ? totalAmount : 0,
+      paymentStatus: paid ? PaymentStatus.PAID : PaymentStatus.UNPAID,
+    })
+    return this.findOne(id)
+  }
+
   async getStatistics() {
     const stats = await this.purchaseOrderRepository
       .createQueryBuilder('order')
