@@ -5,13 +5,15 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc && unset ELECTRON_RUN_AS_NODE && DESKTOP_DEV=true node_modules/.bin/electron .",
-    "start": "unset ELECTRON_RUN_AS_NODE && node_modules/.bin/electron .",
+    "dev": "node scripts/run-electron.js --dev",
+    "start": "node scripts/run-electron.js",
     "rebuild-natives": "node scripts/rebuild-natives.js",
-    "postinstall": "node scripts/rebuild-natives.js || echo 'native rebuild skipped (likely first install before pnpm finishes)'",
+    "postinstall": "node scripts/rebuild-natives.js",
     "package:mac": "electron-builder --mac --arm64 -c.extraMetadata.main=dist/main.js",
+    "package:win": "electron-builder --win --x64 -c.extraMetadata.main=dist/main.js",
+    "package:linux": "electron-builder --linux --x64 -c.extraMetadata.main=dist/main.js",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist release"
+    "clean": "node -e \"const fs=require('fs');for(const d of ['dist','release','build-resources']) fs.rmSync(d,{recursive:true,force:true})\""
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -46,6 +48,20 @@
     "mac": {
       "category": "public.app-category.business",
       "target": "dmg"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false
     }
   }
 }

@@ -16,21 +16,35 @@
 
 ## 🚀 快速開始
 
-### 第一次安裝
+### 共通需求
+- **Node.js 18+**（建議 20）
+- **pnpm 10+**（`npm install -g pnpm`）
+- **Git**
+
+### 平台特殊需求
+
+**Windows：**
+- Visual Studio Build Tools 2019/2022（含「使用 C++ 的桌面開發」工作負載）
+  → 只在 better-sqlite3 預編 binary 抓不到時 fallback 才需要，多數情況不會用到
+- Python 3（如上同）
+
+**macOS：**
+- Xcode Command Line Tools（`xcode-select --install`）
+
+### 第一次安裝（Mac / Windows / Linux 通用）
 
 ```bash
 git clone -b desktop <repo-url>
 cd t-erp
 pnpm install
-# postinstall 會自動對齊 better-sqlite3 native ABI 給 Electron Node 20
+# postinstall 會自動對齊 better-sqlite3 native ABI 給 Electron 32 (Node 20)
 # 失敗的話手動跑：
-# pnpm --filter @t-erp/desktop rebuild-natives
+#   pnpm --filter @t-erp/desktop rebuild-natives
 ```
 
 ### 開發模式
 
 ```bash
-# 用本機 source code 直接跑 Electron（含熱重載 backend）
 pnpm desktop:dev
 ```
 
@@ -42,21 +56,25 @@ pnpm desktop:dev
 # 完整 pipeline（backend → admin → desktop tsc → pnpm deploy → 對齊 native）
 pnpm desktop:build
 
-# 啟動已 build 好的版本（不打包 dmg）
+# 啟動已 build 好的版本（不打包安裝程式）
 pnpm desktop:start
 ```
 
-### 打包 dmg（macOS arm64）
+### 打包安裝程式
 
-```bash
-pnpm desktop:package
-# 產出 apps/desktop/release/T-ERP-X.Y.Z-arm64.dmg
-```
+| 平台 | 指令 | 產出 |
+|---|---|---|
+| macOS arm64 | `pnpm --filter @t-erp/desktop package:mac` | `apps/desktop/release/T-ERP-*.dmg` |
+| Windows x64 | `pnpm --filter @t-erp/desktop package:win` | `apps/desktop/release/T-ERP Setup *.exe`（NSIS installer） |
+| Linux x64 | `pnpm --filter @t-erp/desktop package:linux` | `apps/desktop/release/*.AppImage` |
 
-> Windows 打包需要在 Windows 機器跑：
-> ```bash
-> pnpm --filter @t-erp/desktop exec electron-builder --win --x64
-> ```
+> 跨平台打包：electron-builder 在 Mac 上能打 Mac 但**不建議** cross-build Windows（簽章流程通常壞掉）。Windows installer 請在 Windows 機器跑 `package:win`。
+
+### Windows 第一次跑可能遇到的事
+
+1. **`pnpm install` 卡 better-sqlite3**：先試 `pnpm --filter @t-erp/desktop rebuild-natives`。如果還是失敗，就要裝 Visual Studio Build Tools。
+2. **`desktop:dev` 黑窗閃一下就關**：通常是 backend 子行程沒起來。從 cmd 跑 `pnpm desktop:dev > dev.log 2>&1` 看 log。
+3. **打包 .exe 後 Windows 防護警告「Windows 已保護您的電腦」**：未簽章導致的 SmartScreen 警告。點「其他資訊」→「仍要執行」即可（要免警告需買 EV cert ~$300/年）。
 
 ---
 

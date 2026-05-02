@@ -1,56 +1,62 @@
 #!/usr/bin/env node
 /**
- * Rebuild native modules against Electron's bundled Node ABI.
+ * 把 native modules 對齊到 Electron 內建 Node 的 ABI。
  *
- * Why this script (instead of @electron/rebuild)：
- *  - @electron/rebuild 不支援 pnpm 的 .pnpm/<pkg>@<version>_... node_modules 結構，
- *    跑一半就 ENOENT @ampproject/remapping。
- *  - 我們自己直接呼叫 node-gyp，已知會在每個 native module 工作。
+ * 為什麼不用 @electron/rebuild：
+ *   不支援 pnpm 的 .pnpm/<pkg>@<version>_... node_modules 結構，
+ *   跑一半就 ENOENT @ampproject/remapping。
  *
- * 用法（手動或 postinstall）：
+ * 為什麼用 npm rebuild 而不是直接 node-gyp rebuild：
+ *   better-sqlite3 install hook = `prebuild-install || node-gyp rebuild`
+ *   設好 npm_config_target/runtime 環境變數後 prebuild-install 會去
+ *   GitHub Releases 抓對應 Electron ABI + 平台 + 架構的預編 binary，
+ *   不用本機有 C++ toolchain (Windows 上特別有用，免裝 VS Build Tools)。
+ *   抓不到才 fallback 到 node-gyp（這時才需要 C++ toolchain）。
+ *
+ * 用法：
  *   node apps/desktop/scripts/rebuild-natives.js
  */
 
-const { execSync } = require('child_process')
+const { spawnSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..')
 const PNPM_DIR = path.join(REPO_ROOT, 'node_modules', '.pnpm')
 
-// 從 desktop 的 package.json 抓 electron 版本
-const desktopPkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'))
-const electronRange = desktopPkg.devDependencies.electron
-// 找實際安裝版本
-const installed = fs.readdirSync(PNPM_DIR).find((d) => d.startsWith('electron@'))
-if (!installed) {
-  console.error('找不到已安裝的 electron，先 pnpm install')
+// 抓實際安裝的 electron 版本
+if (!fs.existsSync(PNPM_DIR)) {
+  console.error('node_modules/.pnpm 不存在，請先 pnpm install')
   process.exit(1)
 }
-const electronVersion = installed.replace(/^electron@/, '').split('_')[0]
-console.log(`▶ Electron ${electronVersion} (range ${electronRange})`)
+const installedElectron = fs.readdirSync(PNPM_DIR).find((d) => d.startsWith('electron@'))
+if (!installedElectron) {
+  console.error('找不到已安裝的 electron')
+  process.exit(1)
+}
+const electronVersion = installedElectron.replace(/^electron@/, '').split('_')[0]
+console.log(`▶ Electron ${electronVersion} on ${process.platform}-${process.arch}`)
 
-// 要 rebuild 的 native 模組（pnpm 目錄前綴）
+// 要對齊的 native modules（pnpm 目錄前綴）
 const NATIVE_MODULES = ['better-sqlite3@']
 
-const arch = process.arch
 const targets = []
 
-// 1. 開發環境：在 pnpm content-addressable store 裡的副本
+// 1. content-addressable store 裡的副本（dev 用）
 for (const prefix of NATIVE_MODULES) {
   const matches = fs.readdirSync(PNPM_DIR).filter((d) => d.startsWith(prefix))
   if (matches.length === 0) {
     console.warn(`⚠ 找不到 ${prefix}*`)
     continue
   }
+  const moduleName = prefix.replace('@', '')
   for (const m of matches) {
-    const moduleName = prefix.replace('@', '')
     const moduleDir = path.join(PNPM_DIR, m, 'node_modules', moduleName)
     if (fs.existsSync(moduleDir)) targets.push({ name: moduleName, dir: moduleDir })
   }
 }
 
-// 2. 打包路徑：pnpm deploy 出來的 build-resources/backend/node_modules/<name>
+// 2. pnpm deploy 出來的副本（打包用）
 const DEPLOY_DIR = path.join(__dirname, '..', 'build-resources', 'backend', 'node_modules')
 if (fs.existsSync(DEPLOY_DIR)) {
   for (const prefix of NATIVE_MODULES) {
@@ -65,18 +71,36 @@ if (targets.length === 0) {
   process.exit(0)
 }
 
+// 跨平台的 npm 路徑
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+
 for (const { name, dir } of targets) {
   console.log(`\n▶ Rebuilding ${name} @ ${dir}`)
-  try {
-    execSync(
-      `node-gyp rebuild --target=${electronVersion} --arch=${arch} --dist-url=https://electronjs.org/headers`,
-      { cwd: dir, stdio: 'inherit' },
-    )
-    console.log(`✓ ${name} rebuilt`)
-  } catch (err) {
-    console.error(`✗ ${name} 失敗:`, err.message)
-    process.exit(1)
+
+  const result = spawnSync(npmCmd, ['rebuild', '--build-from-source=false'], {
+    cwd: dir,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      // prebuild-install 會用這些抓對的預編 binary
+      npm_config_target: electronVersion,
+      npm_config_runtime: 'electron',
+      npm_config_target_arch: process.arch,
+      npm_config_disturl: 'https://electronjs.org/headers',
+      npm_config_target_platform: process.platform,
+    },
+    shell: process.platform === 'win32',
+  })
+
+  if (result.status !== 0) {
+    console.error(`✗ ${name} 失敗 (exit ${result.status})`)
+    if (process.platform === 'win32') {
+      console.error('  Windows 提示：如果 prebuild-install 抓不到 binary 退到 node-gyp，')
+      console.error('  你需要先裝 Visual Studio Build Tools (含 Desktop C++) + Python 3')
+    }
+    process.exit(result.status || 1)
   }
+  console.log(`✓ ${name} rebuilt`)
 }
 
-console.log('\n✓ 全部 rebuild 完成')
+console.log('\n✓ 全部 native module 對齊完成')
