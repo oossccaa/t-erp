@@ -740,6 +740,9 @@ watch(
 // 當對話框打開時處理表單
 watch(visible, (newVisible) => {
   if (newVisible) {
+    // 每次打開重抓 customers / products，避免使用者剛在別的頁面新增完看不到
+    fetchCustomers()
+    fetchProducts()
     if (props.saleOrder) {
       Object.assign(form, {
         customerId: props.saleOrder.customerId,
