@@ -1,18 +1,13 @@
 {
   "name": "t-erp",
   "version": "1.0.0",
-  "description": "小工廠進銷存系統 - 基於 NestJS + Vue3 + MySQL 的 monorepo 進銷存管理系統",
+  "description": "小工廠進銷存系統 — 雲端版（NestJS + Vue3 + PostgreSQL）。桌機 Electron 版在 desktop 分支。",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "build:cloud": "FEATURE_WEIGHT=true VITE_FEATURE_WEIGHT=true TARGET=cloud VITE_TARGET=cloud turbo run build",
     "dev": "FEATURE_WEIGHT=true VITE_FEATURE_WEIGHT=true turbo run dev",
     "dev:demo": "DB_NAME=t_erp_demo FEATURE_WEIGHT=true VITE_FEATURE_WEIGHT=true turbo run dev",
-    "dev:sqlite": "DB_TYPE=sqlite FEATURE_WEIGHT=true VITE_FEATURE_WEIGHT=true TARGET=desktop VITE_TARGET=desktop turbo run dev",
-    "desktop:build": "node apps/desktop/scripts/build.js",
-    "desktop:start": "pnpm --filter @t-erp/desktop start",
-    "desktop:dev": "pnpm --filter @t-erp/desktop dev",
-    "desktop:package": "pnpm desktop:build && pnpm --filter @t-erp/desktop package:mac",
     "seed:demo:admin": "pnpm --filter @t-erp/backend seed:demo:admin",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
@@ -39,7 +34,6 @@
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "onlyBuiltDependencies": [
-      "better-sqlite3",
       "@nestjs/core"
     ]
   }

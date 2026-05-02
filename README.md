@@ -1,12 +1,16 @@
-# T-ERP 進銷存系統
+# T-ERP 進銷存系統 — `cloud` 分支
 
-小工廠進銷存系統，**單一 codebase 同時支援雲端版（瀏覽器 + PostgreSQL）與桌機版（Electron + SQLite）**。
+> **這個分支只含雲端版**（NestJS + Vue3 + PostgreSQL + Docker）
+> 桌機 Electron 版在 [`desktop` 分支](https://github.com/oossccaa/t-erp/tree/desktop)
+> 兩個分支獨立運作，安裝任一邊不會影響另一邊
+
+小工廠進銷存系統，雲端版部署到 VPS，給多人 Web 瀏覽器使用。
 
 > **目標客戶：** 小型製造業、零件貿易商、傳產工廠
 > **架構模式：** Monorepo (pnpm + turbo)
-> **後端：** NestJS + TypeORM
+> **後端：** NestJS + TypeORM + PostgreSQL
 > **前端：** Vue 3 + Element Plus + Vite
-> **資料庫：** PostgreSQL（雲端） / better-sqlite3（桌機）
+> **部署：** Docker Compose + Caddy（auto SSL）
 
 ---
 
