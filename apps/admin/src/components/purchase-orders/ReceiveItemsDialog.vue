@@ -56,6 +56,7 @@
 
     <template #footer>
       <el-button @click="handleCancel">取消</el-button>
+      <el-button type="info" @click="handleReceiveAll">全部收貨</el-button>
       <el-button type="primary" :loading="loading" @click="handleSubmit">
         確認收貨
       </el-button>
@@ -89,19 +90,31 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-// 當進貨單變更時初始化項目
-watch(
-  () => props.purchaseOrder,
-  (order) => {
-    if (order?.items) {
-      items.value = order.items.map(item => ({
-        ...item,
-        currentReceive: Math.max(0, item.quantity - (item.receivedQuantity || 0))
-      }))
-    }
-  },
-  { immediate: true }
-)
+const initItems = () => {
+  const order = props.purchaseOrder
+  if (order?.items) {
+    items.value = order.items.map(item => ({
+      ...item,
+      currentReceive: Math.max(0, item.quantity - (item.receivedQuantity || 0))
+    }))
+  } else {
+    items.value = []
+  }
+}
+
+// 進貨單 prop 變化時 → 初始化
+watch(() => props.purchaseOrder, initItems, { immediate: true })
+
+// 對話框每次打開時也重新初始化（同一個 order 重開時 prop ref 不變, watch 不會觸發）
+watch(visible, (open) => {
+  if (open) initItems()
+})
+
+const handleReceiveAll = () => {
+  items.value.forEach(item => {
+    item.currentReceive = Math.max(0, item.quantity - (item.receivedQuantity || 0))
+  })
+}
 
 const handleSubmit = async () => {
   // 驗證至少有一項要收貨
@@ -132,7 +145,8 @@ const handleCancel = () => {
 }
 
 const handleClosed = () => {
-  items.value = []
+  // 不清空 items；下次開啟由 watch(visible) 重新從 props 初始化
+  // 之前清空導致 prop ref 沒變時無法 re-init → 列表空白 bug
 }
 </script>
 
