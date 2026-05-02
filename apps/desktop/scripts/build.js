@@ -31,8 +31,9 @@ function run(cmd, opts = {}) {
 run('pnpm build', { cwd: BACKEND_DIR })
 
 // 2. admin dist (relative base, API 指向 localhost:3939)
+//    桌機版不需要重量功能 → VITE_FEATURE_WEIGHT=false
 run(
-  'VITE_API_BASE_URL=http://localhost:3939/api/v1 VITE_FEATURE_WEIGHT=true VITE_TARGET=desktop pnpm exec vite build --base ./',
+  'VITE_API_BASE_URL=http://localhost:3939/api/v1 VITE_FEATURE_WEIGHT=false VITE_TARGET=desktop pnpm exec vite build --base ./',
   { cwd: ADMIN_DIR },
 )
 

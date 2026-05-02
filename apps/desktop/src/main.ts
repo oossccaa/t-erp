@@ -77,7 +77,8 @@ function startBackend(): Promise<void> {
     DB_TYPE: 'sqlite',
     SQLITE_PATH: sqlitePath,
     JWT_SECRET: process.env.JWT_SECRET || 'desktop-local-secret',
-    FEATURE_WEIGHT: 'true',
+    // 桌機版（A 客戶）不需要重量功能 — 全部隱藏
+    FEATURE_WEIGHT: 'false',
     TARGET: 'desktop',
   }
 
