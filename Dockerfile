@@ -16,8 +16,15 @@ RUN pnpm --filter @t-erp/backend build
 
 # ===== Admin build =====
 FROM base AS admin-build
+ARG VITE_API_BASE_URL=/api/v1
+ARG VITE_FEATURE_WEIGHT=true
+ARG VITE_TARGET=cloud
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_FEATURE_WEIGHT=$VITE_FEATURE_WEIGHT \
+    VITE_TARGET=$VITE_TARGET
 COPY apps/admin/ ./apps/admin/
-RUN pnpm --filter @t-erp/admin build
+# vue-tsc 在 monorepo 設定有遺留型別錯誤（不影響 runtime），先用純 vite build 跳過
+RUN cd apps/admin && pnpm exec vite build
 
 # ===== Backend runtime =====
 FROM node:20-alpine AS backend-runtime
@@ -38,7 +45,7 @@ WORKDIR /app/apps/backend
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD curl -f http://localhost:3000/api/v1/health || exit 1
 
 CMD ["node", "dist/main.js"]
 

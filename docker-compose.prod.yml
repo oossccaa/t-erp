@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: t-erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups   # pg_dump 備份目錄掛進去
+    networks: [t-erp]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-runtime
+    image: t-erp/backend:latest
+    container_name: t-erp-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_PREFIX: api/v1
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      FEATURE_WEIGHT: ${FEATURE_WEIGHT:-true}
+      TARGET: cloud
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [t-erp]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: admin-runtime
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_FEATURE_WEIGHT: ${FEATURE_WEIGHT:-true}
+        VITE_TARGET: cloud
+    image: t-erp/admin:latest
+    container_name: t-erp-admin
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [t-erp]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: t-erp-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - admin
+      - backend
+    networks: [t-erp]
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  t-erp:
+    driver: bridge

@@ -1,0 +1,42 @@
+# T-ERP Caddy 反向代理設定
+#
+# DOMAIN 由 docker-compose 注入：
+#   - 有 domain 時填 "erp.example.com"，Caddy 自動申請 Let's Encrypt SSL
+#   - 沒 domain 時填 ":80"，純 HTTP 跑在 IP 上（Caddy 會跳過 SSL）
+#
+# 路由：
+#   /api/*  → backend:3000（NestJS）
+#   /*      → admin:80（Vue SPA via nginx）
+
+{$DOMAIN} {
+    encode gzip zstd
+
+    # 安全標頭
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # 隱藏 server 資訊
+        -Server
+    }
+
+    # 後端 API
+    handle /api/* {
+        reverse_proxy backend:3000
+    }
+
+    # Swagger 文件（可選，正式環境想關掉就把這段註解掉）
+    handle /api/docs* {
+        reverse_proxy backend:3000
+    }
+
+    # 健康檢查 endpoint（給外部 monitoring 用）
+    handle /health {
+        respond "OK" 200
+    }
+
+    # 其他全部丟給 admin SPA
+    handle {
+        reverse_proxy admin:80
+    }
+}
