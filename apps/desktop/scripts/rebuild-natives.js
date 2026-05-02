@@ -79,21 +79,4 @@ for (const { name, dir } of targets) {
   }
 }
 
-// 3. bcrypt 用 N-API（ABI 穩定），只要把預載的 prebuilt binary 複製過去
-//    pnpm deploy 不會跑 install 腳本，所以 lib/binding/.../bcrypt_lib.node 不存在
-const bcryptDeployDir = path.join(DEPLOY_DIR, 'bcrypt')
-if (fs.existsSync(bcryptDeployDir)) {
-  const bcryptStore = fs
-    .readdirSync(PNPM_DIR)
-    .find((d) => d.startsWith('bcrypt@') && !d.startsWith('bcrypt@types'))
-  if (bcryptStore) {
-    const srcBinding = path.join(PNPM_DIR, bcryptStore, 'node_modules', 'bcrypt', 'lib', 'binding')
-    const dstBinding = path.join(bcryptDeployDir, 'lib', 'binding')
-    if (fs.existsSync(srcBinding)) {
-      execSync(`mkdir -p "${path.dirname(dstBinding)}" && cp -R "${srcBinding}" "${dstBinding}"`)
-      console.log(`✓ bcrypt prebuilt 已複製到 deploy`)
-    }
-  }
-}
-
 console.log('\n✓ 全部 rebuild 完成')
