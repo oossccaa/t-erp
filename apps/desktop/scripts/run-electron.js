@@ -18,11 +18,13 @@ const isDev = process.argv.includes('--dev')
 const desktopRoot = path.resolve(__dirname, '..')
 
 // 1. 編譯 TS（dev 模式才跑，純 start 預設 dist 已存在）
+//    用 pnpm exec 而不是 npx：pnpm 在 Windows 沒幫子 workspace 建 .bin/tsc shim 時
+//    npx 找不到，但 pnpm exec 會走 workspace dependency tree 找到 typescript。
 if (isDev) {
-  const tsc = spawnSync('npx', ['tsc'], {
+  const tsc = spawnSync('pnpm', ['exec', 'tsc'], {
     cwd: desktopRoot,
     stdio: 'inherit',
-    shell: true,
+    shell: process.platform === 'win32',
   })
   if (tsc.status !== 0) {
     console.error('tsc 編譯失敗')
