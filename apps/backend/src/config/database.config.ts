@@ -69,9 +69,14 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.get('DB_PASSWORD', 'postgres123'),
       database: this.configService.get('DB_NAME', 't_erp'),
       entities: ENTITIES,
-      synchronize: !isProduction,
+      // 預設 production 不 sync（怕 TypeORM 自動 alter 把資料弄丟），dev 一律 sync。
+      // 首次部署 production 想 auto-create schema 可以在 .env 加 DB_SYNC=true，
+      // schema 穩定後改回 false。
+      synchronize: this.configService.get<string>('DB_SYNC') === 'true' ? true : !isProduction,
       logging: isDev,
-      ssl: isProduction ? { rejectUnauthorized: false } : false,
+      // SSL 只在外接受管 DB（AWS RDS / Supabase 等）才需要。
+      // 自架 docker postgres 跑在內網，不能也不該強制 SSL。
+      ssl: this.configService.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       extra: {
         max: this.configService.get('DB_CONNECTION_LIMIT', 20),
         connectionTimeoutMillis: this.configService.get('DB_CONNECTION_TIMEOUT', 60000),
