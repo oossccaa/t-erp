@@ -28,14 +28,19 @@ RUN cd apps/admin && pnpm exec vite build
 
 # ===== Backend runtime =====
 FROM node:20-alpine AS backend-runtime
-RUN apk add --no-cache curl && npm install -g pnpm@10.33.0
+# python3 / make / g++ 是 better-sqlite3 從源碼 fallback 編譯時可能用到的工具
+RUN apk add --no-cache curl python3 make g++ && npm install -g pnpm@10.33.0
 WORKDIR /app
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 
 COPY --chown=nestjs:nodejs package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY --chown=nestjs:nodejs apps/backend/package.json ./apps/backend/
-RUN pnpm install --frozen-lockfile --prod --filter @t-erp/backend
+# pnpm 10 預設不執行 install scripts（安全機制）
+# bcrypt 的 prebuilt 下載在 install hook，不跑就缺 .node binding
+# 用 --config.confirmModulesPurge=false 跟 rebuild 強迫跑
+RUN pnpm install --frozen-lockfile --prod --filter @t-erp/backend \
+    && pnpm rebuild bcrypt better-sqlite3 || true
 
 COPY --from=backend-build --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
 
