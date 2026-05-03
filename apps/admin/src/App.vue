@@ -8,9 +8,13 @@
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { useIdleTimeout } from '@/composables/useIdleTimeout'
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
+
+// 閒置 30 分鐘自動登出（避免同事路過看到別人帳號）
+useIdleTimeout({ minutes: 30 })
 
 // 初始化應用
 onMounted(() => {
