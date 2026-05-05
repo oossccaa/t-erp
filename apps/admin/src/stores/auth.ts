@@ -54,6 +54,8 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('refreshToken', this.refreshToken)
         }
         localStorage.setItem('user', JSON.stringify(user))
+        // 重置閒置計時, 避免上一個用戶留下的 lastActivityAt 害新用戶秒被踢
+        localStorage.setItem('lastActivityAt', String(Date.now()))
 
         ElMessage.success('登入成功')
         return response
