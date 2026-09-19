@@ -97,9 +97,9 @@ GRANT ALL PRIVILEGES ON DATABASE t_erp_dev TO t_erp_user;
 pnpm dev
 
 # 或分別啟動各個服務
-pnpm --filter @t-erp/backend dev    # 後端 API (http://localhost:3000)
-pnpm --filter @t-erp/admin dev      # 管理後台 (http://localhost:3001)
-pnpm --filter @t-erp/client dev     # 客戶端 (http://localhost:3002)
+pnpm --filter @t-erp/backend dev    # 後端 API (http://localhost:7001)
+pnpm --filter @t-erp/admin dev      # 管理後台 (http://localhost:7002)
+pnpm --filter @t-erp/client dev     # 客戶端 (http://localhost:7003)
 ```
 
 ## 📁 專案結構
@@ -460,7 +460,7 @@ pnpm --filter @t-erp/backend dev
 
 ### API 文檔
 
-API 文檔使用 Swagger 自動生成，訪問 `http://localhost:3000/api/docs`
+API 文檔使用 Swagger 自動生成，訪問 `http://localhost:7001/api/docs`
 
 ### 代碼文檔
 

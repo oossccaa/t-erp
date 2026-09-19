@@ -29,7 +29,7 @@ docker-compose --version  # 需要 >= 2.0
 
 2. **檢查端口衝突**:
 ```bash
-lsof -i :80,443,3000,5432,6379
+lsof -i :80,443,7001,5432,6379
 ```
 
 3. **清理 Docker 環境**:
@@ -94,7 +94,7 @@ UPDATE users SET password = '$2b$12$LQv3c1yqBwEHxPfGZ8qBu.1w9ElzzyW8tDcKgNOZmEwG
 1. **前端自動處理**: 系統會自動使用 refresh token 更新 access token
 2. **手動刷新**:
 ```bash
-curl -X POST http://localhost:3000/api/auth/refresh \
+curl -X POST http://localhost:7001/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token": "YOUR_REFRESH_TOKEN"}'
 ```
@@ -122,7 +122,7 @@ curl -X POST http://localhost:3000/api/auth/refresh \
 
 2. **API 批量創建**:
 ```bash
-curl -X POST http://localhost:3000/api/products/batch \
+curl -X POST http://localhost:7001/api/products/batch \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '[{"name": "產品1", "sku": "SKU001", ...}]'
@@ -134,7 +134,7 @@ curl -X POST http://localhost:3000/api/products/batch \
 
 1. **檢查庫存移動記錄**:
 ```bash
-curl -X GET "http://localhost:3000/api/inventory/movements?productId=1" \
+curl -X GET "http://localhost:7001/api/inventory/movements?productId=1" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -275,12 +275,12 @@ tar -czf files_backup_$(date +%Y%m%d).tar.gz uploads/
 
 1. **健康檢查**:
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:7001/api/health
 ```
 
 2. **系統資訊**:
 ```bash
-curl http://localhost:3000/api/info
+curl http://localhost:7001/api/info
 ```
 
 3. **日誌檢查**:
@@ -329,7 +329,7 @@ pnpm --filter @t-erp/backend migration:run
 
 1. **檢查 API 狀態**:
 ```bash
-curl -I http://localhost:3000/api/health
+curl -I http://localhost:7001/api/health
 ```
 
 2. **驗證認證令牌**:
@@ -402,7 +402,7 @@ pnpm install
 3. **端口衝突**:
 ```bash
 # 檢查端口使用狀況
-lsof -i :3000,3001,3002
+lsof -i :7001,7002,7003
 ```
 
 ### Q: 如何添加新功能？

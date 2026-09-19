@@ -52,7 +52,7 @@ pnpm dev:demo          # 切到 t_erp_demo DB
 pnpm dev:sqlite        # 後端用 SQLite（桌機 schema 但跑在瀏覽器）
 ```
 
-開啟 `http://localhost:3001`，登入 `admin / admin123`。
+開啟 `http://localhost:7002`，登入 `admin / admin123`。
 
 **正式 build：**
 
@@ -96,7 +96,7 @@ pnpm desktop:package
 │   apps/backend (NestJS)     │         │   apps/backend (NestJS)     │
 │   cloud 模式                │         │   desktop 模式               │
 │   ─────────────────────     │         │   ─────────────────────     │
-│   listen :3000              │         │   listen :3939 (本機)       │
+│   listen :7001              │         │   listen :3939 (本機)       │
 │   DB_TYPE=postgres          │         │   DB_TYPE=sqlite            │
 │                             │         │   SQLITE_PATH=userData/...  │
 └─────────────┬───────────────┘         └──────────┬──────────────────┘

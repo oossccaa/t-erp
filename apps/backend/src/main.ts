@@ -41,7 +41,7 @@ async function bootstrap() {
 
   // CORS 設定
   app.enableCors({
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:3001,http://localhost:3002').split(','),
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:7002,http://localhost:7003').split(','),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -71,7 +71,7 @@ async function bootstrap() {
     },
   })
 
-  const port = process.env.PORT || 3000
+  const port = process.env.PORT || 7001
   await app.listen(port)
 
   // 首次啟動 seed 預設管理員（users 為空時）

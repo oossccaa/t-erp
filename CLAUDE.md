@@ -36,8 +36,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 apps/
-├── backend/         # NestJS API 服務 (port 3000)
-└── admin/          # Vue3 前端（響應式，桌面+手機共用）(port 3001)
+├── backend/         # NestJS API 服務 (port 7001)
+└── admin/          # Vue3 前端（響應式，桌面+手機共用）(port 7002)
 ```
 
 ## 開發環境需求

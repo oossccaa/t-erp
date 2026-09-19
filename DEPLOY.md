@@ -16,7 +16,7 @@ Vultr / DO / Linode VPS (Ubuntu 24.04)
     ├── Caddyfile
     └── 4 個 docker container：
         ├── postgres   :5432  (內網 only)
-        ├── backend    :3000  (內網 only)
+        ├── backend    :7001  (內網 only)
         ├── admin      :80    (內網 only)
         └── caddy      :80, :443 (公開，含 Let's Encrypt SSL)
 ```

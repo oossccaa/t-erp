@@ -5,7 +5,7 @@
 #   - 沒 domain 時填 ":80"，純 HTTP 跑在 IP 上（Caddy 會跳過 SSL）
 #
 # 路由：
-#   /api/*  → backend:3000（NestJS）
+#   /api/*  → backend:7001（NestJS）
 #   /*      → admin:80（Vue SPA via nginx）
 
 {$DOMAIN} {
@@ -22,12 +22,12 @@
 
     # 後端 API
     handle /api/* {
-        reverse_proxy backend:3000
+        reverse_proxy backend:7001
     }
 
     # Swagger 文件（可選，正式環境想關掉就把這段註解掉）
     handle /api/docs* {
-        reverse_proxy backend:3000
+        reverse_proxy backend:7001
     }
 
     # 健康檢查 endpoint（給外部 monitoring 用）

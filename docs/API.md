@@ -6,7 +6,7 @@ T-ERP 系統提供完整的 RESTful API，支援進銷存管理的所有核心�
 
 ### 基礎信息
 
-- **Base URL**: `http://localhost:3000/api`
+- **Base URL**: `http://localhost:7001/api`
 - **認證方式**: JWT Bearer Token
 - **內容類型**: `application/json`
 - **API 版本**: v1.0
@@ -15,14 +15,14 @@ T-ERP 系統提供完整的 RESTful API，支援進銷存管理的所有核心�
 
 1. **獲取訪問令牌**:
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:7001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "admin123"}'
 ```
 
 2. **使用令牌訪問 API**:
 ```bash
-curl -X GET http://localhost:3000/api/users \
+curl -X GET http://localhost:7001/api/users \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -407,7 +407,7 @@ curl -X GET http://localhost:3000/api/users \
   "phone": "0987654321",
   "address": "新客戶地址",
   "contactPerson": "新聯絡人",
-  "creditLimit": 30000.00,
+  "creditLimit": 70010.00,
   "paymentTerms": 15
 }
 ```
@@ -638,7 +638,7 @@ curl -X GET http://localhost:3000/api/users \
 import { TErpApi } from '@t-erp/sdk'
 
 const api = new TErpApi({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'http://localhost:7001/api',
   token: 'your-jwt-token'
 })
 
@@ -650,7 +650,7 @@ const products = await api.products.list({ page: 1, limit: 20 })
 
 ```bash
 # 設置環境變數
-export API_BASE=http://localhost:3000/api
+export API_BASE=http://localhost:7001/api
 export TOKEN=your-jwt-token
 
 # 獲取產品列表
@@ -674,6 +674,6 @@ curl -X POST "$API_BASE/products" \
 如需 API 相關技術支援，請：
 
 1. 查閱本文檔和 [FAQ](./FAQ.md)
-2. 訪問 Swagger 文檔: `http://localhost:3000/api/docs`
+2. 訪問 Swagger 文檔: `http://localhost:7001/api/docs`
 3. 提交 [GitHub Issue](https://github.com/your-org/t-erp/issues)
 4. 聯絡技術支援: support@t-erp.com

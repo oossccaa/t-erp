@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "vue-tsc && vite build",
-    "dev": "vite --port 3001",
+    "dev": "vite --port 7002",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "test": "vitest",
